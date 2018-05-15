@@ -843,7 +843,7 @@ namespace RockWeb.Blocks.Event
             registrationTemplate.WaitListTransitionEmailTemplate = ceWaitListTransitionEmailTemplate.Text;
 
             registrationTemplate.RegistrationTerm = string.IsNullOrWhiteSpace( tbRegistrationTerm.Text ) ? "Registration" : tbRegistrationTerm.Text;
-            registrationTemplate.RegistrantTerm = string.IsNullOrWhiteSpace( tbRegistrantTerm.Text ) ? "Registrant" : tbRegistrantTerm.Text;
+            registrationTemplate.RegistrantTerm = string.IsNullOrWhiteSpace( tbRegistrantTerm.Text ) ? "Person" : tbRegistrantTerm.Text;
             registrationTemplate.FeeTerm = string.IsNullOrWhiteSpace( tbFeeTerm.Text ) ? "Additional Options" : tbFeeTerm.Text;
             registrationTemplate.DiscountCodeTerm = string.IsNullOrWhiteSpace( tbDiscountCodeTerm.Text ) ? "Discount Code" : tbDiscountCodeTerm.Text;
             registrationTemplate.SuccessTitle = tbSuccessTitle.Text;
@@ -1110,6 +1110,7 @@ namespace RockWeb.Blocks.Event
                     discount.MinRegistrants = discountUI.MinRegistrants;
                     discount.StartDate = discountUI.StartDate;
                     discount.EndDate = discountUI.EndDate;
+                    discount.AutoApplyDiscount = discountUI.AutoApplyDiscount;
                 }
 
                 // add/updated fees
@@ -1130,6 +1131,7 @@ namespace RockWeb.Blocks.Event
                     fee.AllowMultiple = feeUI.AllowMultiple;
                     fee.Order = feeUI.Order;
                     fee.IsActive = feeUI.IsActive;
+                    fee.IsRequired = feeUI.IsRequired;
                 }
 
                 rockContext.SaveChanges();
@@ -1717,6 +1719,7 @@ namespace RockWeb.Blocks.Event
             discount.MinRegistrants = nbDiscountMinRegistrants.Text.AsIntegerOrNull();
             discount.StartDate = drpDiscountDateRange.LowerValue;
             discount.EndDate = drpDiscountDateRange.UpperValue;
+            discount.AutoApplyDiscount = cbcAutoApplyDiscount.Checked;
 
             HideDialog();
 
@@ -2140,6 +2143,7 @@ namespace RockWeb.Blocks.Event
                 pwDetails.Expanded = false;
             }
 
+            pdAuditDetails.Visible = false;
             SetEditMode( true );
 
             LoadDropDowns( rockContext );
@@ -2775,6 +2779,7 @@ namespace RockWeb.Blocks.Event
             nbDiscountMinRegistrants.Text = discount.MinRegistrants.HasValue ? discount.MinRegistrants.ToString() : string.Empty;
             drpDiscountDateRange.LowerValue = discount.StartDate;
             drpDiscountDateRange.UpperValue = discount.EndDate;
+            cbcAutoApplyDiscount.Checked = discount.AutoApplyDiscount;
 
             ShowDialog( "Discounts" );
         }

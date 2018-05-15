@@ -168,6 +168,24 @@ namespace Rock.Model
         public string Path { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating the width of a file type.
+        /// </summary>
+        /// <value>
+        /// A <see cref="System.Int32"/> representing the width in pixels of a file type.
+        /// </value>
+        [DataMember]
+        public int? Width { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating the height of a file type.
+        /// </summary>
+        /// <value>
+        /// A <see cref="System.Int32"/> representing the height in pixels of a file type.
+        /// </value>
+        [DataMember]
+        public int? Height { get; set; }
+
+        /// <summary>
         /// Gets or sets the content last modified.
         /// </summary>
         /// <value>
@@ -324,7 +342,17 @@ namespace Rock.Model
                 if ( StorageProvider != null )
                 {
                     this.BinaryFileTypeId = entry.OriginalValues["BinaryFileTypeId"].ToString().AsInteger();
-                    StorageProvider.DeleteContent( this );
+
+                    try
+                    {
+                        StorageProvider.DeleteContent( this );
+                    }
+                    catch ( Exception ex )
+                    {
+                        // If an exception occurred while trying to delete provider's file, log the exception, but continue with the delete.
+                        ExceptionLogService.LogException( ex );
+                    }
+
                     this.BinaryFileTypeId = null;
                 }
             }
@@ -369,6 +397,7 @@ namespace Rock.Model
                         }
                     }
                 }
+
 
                 else if ( entry.State == System.Data.Entity.EntityState.Modified )
                 {

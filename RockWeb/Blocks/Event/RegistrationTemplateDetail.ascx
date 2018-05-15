@@ -229,7 +229,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <Rock:RockTextBox ID="tbRegistrationTerm" runat="server" Label="Registration Term" Placeholder="Registration" />
-                                <Rock:RockTextBox ID="tbRegistrantTerm" runat="server" Label="Registrant Term" Placeholder="Registrant" />
+                                <Rock:RockTextBox ID="tbRegistrantTerm" runat="server" Label="Registrant Term" Placeholder="Person" />
                             </div>
                             <div class="col-md-6">
                                 <Rock:RockTextBox ID="tbFeeTerm" runat="server" Label="Fee Term" Placeholder="Additional Options" />
@@ -361,7 +361,7 @@
                             <Rock:RockControlWrapper ID="rcwFees" runat="server" Label="Fees">
                                 <asp:Repeater ID="rFees" runat="server" >
                                     <ItemTemplate>
-                                        <div <%# FormatInactiveRow(DataBinder.Eval(Container.DataItem, "IsActive").ToString() ) %> >
+                                        <div class="row">
                                             <div class="col-xs-4"><%# Eval("Name") %></div>
                                             <div class="col-xs-8"><%# FormatFeeCost( Eval("CostValue").ToString() ) %></div>
                                         </div>
@@ -443,6 +443,8 @@
                         </Rock:RockRadioButtonList>
                         <Rock:NumberBox ID="nbDiscountPercentage" runat="server" AppendText="%" CssClass="input-width-md" Label="Discount Percentage" NumberType="Integer" ValidationGroup="Discount"  />
                         <Rock:CurrencyBox ID="cbDiscountAmount" runat="server" CssClass="input-width-md" Label="Discount Amount" ValidationGroup="Discount" />
+                        <Rock:RockCheckBox ID="cbcAutoApplyDiscount" runat="server" Label="Auto Apply Discount" 
+                            Help="Will automatically apply the discount if the registration meets the criteria.  If multiple automatic discounts exist, only the first one that meets the criteria will be applied." />
                     </div>
                     <div class="col-md-6">
                         <Rock:NumberBox ID="nbDiscountMaxUsage" runat="server" NumberType="Integer" MinimumValue="0" Label="Maximum Usage" 
@@ -462,8 +464,10 @@
             <Content>
                 <asp:HiddenField ID="hfFeeGuid" runat="server" />
                 <asp:ValidationSummary ID="ValidationSummaryFee" runat="server" HeaderText="Please Correct the Following" CssClass="alert alert-danger" ValidationGroup="Fee" />
-                <div class="col-md-12">
-                    <Rock:RockTextBox ID="tbFeeName" runat="server" Label="Name" ValidationGroup="Fee" Required="true" />
+                <div class="row">
+                    <div class="col-md-12">
+                        <Rock:RockTextBox ID="tbFeeName" runat="server" Label="Name" ValidationGroup="Fee" Required="true" />
+                    </div>
                 </div>
                 <div class="row">
                     <div class="col-md-6">
@@ -474,10 +478,10 @@
                     <div class="col-md-3">
                         <Rock:RockCheckBox ID="cbAllowMultiple" runat="server" Label="Enable Quantity" ValidationGroup="Fee" Text="Yes" Help="Should registrants be able to select more than one of this item?" CssClass="form-check"/>
                         <Rock:RockCheckBox ID="cbDiscountApplies" runat="server" Label="Discount Applies" ValidationGroup="Fee" Text="Yes" Help="Should discounts be applied to this fee?" />
-                        <Rock:RockCheckBox ID="cbFeeIsActive" runat="server" Label="Is Active" ValidationGroup="Fee" Text="Yes" Help="Unchecking this will remove the fee option for new registrations but will not effect the existing registrants." />
+                        <Rock:RockCheckBox ID="cbFeeIsActive" runat="server" Label="Is Active" ValidationGroup="Fee" Text="Yes" Help="Unchecking this will remove the fee for new registrations but will not effect the existing registrants." />
                     </div>
                     <div class="col-md-3">
-                        <Rock:RockCheckBox ID="cbFeeIsRequired" runat="server" Label="Is Required" ValidationGroup="Fee" Text="Yes" Help="Checking this will mark the fee option for new registrations required." />
+                        <Rock:RockCheckBox ID="cbFeeIsRequired" runat="server" Label="Is Required" ValidationGroup="Fee" Text="Yes" Help="Checking this will mark the fee for new registrations required." />
                     </div>
                 </div>
             </Content>

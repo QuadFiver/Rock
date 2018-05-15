@@ -65,7 +65,7 @@ namespace RockWeb.Blocks.Security
             {
                 _personId = person.Id;
 
-                var personNameField = gUserLogins.ColumnsOfType<HyperLinkField>().FirstOrDefault( a => a.HeaderText == "Person" );
+                var personNameField = gUserLogins.ColumnsOfType<PersonField>().FirstOrDefault( a => a.HeaderText == "Person" );
                 if ( personNameField != null )
                 {
                     // Hide the person name column
@@ -495,10 +495,6 @@ namespace RockWeb.Blocks.Security
                     {
                         var component = AuthenticationContainer.GetComponent( entityType.Name );
                         lProviderName.Text = entityType.FriendlyName;
-                        if ( !component.PromptForUserName )
-                        {
-                            lUserNameOrRemoteProvider.Text = "(External)";
-                        }
                     }
                 }
             }
@@ -562,7 +558,6 @@ namespace RockWeb.Blocks.Security
         private void SetUIControls()
         {
             tbUserNameEdit.Visible = true;
-            lUserNameExternal.Visible = false;
             rcwPassword.Visible = false;
             tbPassword.Required = false;
             tbPasswordConfirm.Required = false;
@@ -581,8 +576,7 @@ namespace RockWeb.Blocks.Security
                     }
 
                     rcwPassword.Visible = component.PromptForPassword;
-                    tbUserNameEdit.Visible = component.PromptForUserName;
-                    lUserNameExternal.Visible = !component.PromptForUserName;
+                    tbUserNameEdit.Visible = true;
 
                     if ( component.PromptForPassword )
                     {
@@ -641,7 +635,5 @@ namespace RockWeb.Blocks.Security
         }
 
         #endregion
-
-        
     }
 }
