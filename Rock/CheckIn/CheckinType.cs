@@ -125,7 +125,7 @@ namespace Rock.CheckIn
         /// <value>
         /// The type of the search.
         /// </value>
-        public DefinedValueCache SearchType { get { return DefinedValueCache.Read( GetSetting( "core_checkin_SearchType" ).AsGuid() ); } }
+        public DefinedValueCache SearchType { get { return DefinedValueCache.Get( GetSetting( "core_checkin_SearchType" ).AsGuid() ); } }
 
         /// <summary>
         /// Gets the regular expression filter.
@@ -254,7 +254,7 @@ namespace Rock.CheckIn
         /// <param name="checkinTypeId">The checkin type identifier.</param>
         public CheckinType( int checkinTypeId )
         {
-            _checkinType = GroupTypeCache.Read( checkinTypeId );
+            _checkinType = GroupTypeCache.Get( checkinTypeId );
         }
 
         /// <summary>

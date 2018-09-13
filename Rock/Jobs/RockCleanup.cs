@@ -16,17 +16,18 @@
 //
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+
 using Quartz;
 using Rock.Attribute;
-using Rock.Model;
-using Rock.Data;
-using System.Data.Entity;
 using Rock.Web.Cache;
+using Rock.Data;
 using Rock.Field.Types;
-using System.Reflection;
+using Rock.Model;
 
 namespace Rock.Jobs
 {
@@ -43,7 +44,7 @@ namespace Rock.Jobs
     public class RockCleanup : IJob
     {
         /// <summary>
-        /// Empty constructor for job initilization
+        /// Empty constructor for job initialization
         /// <para>
         /// Jobs require a public empty constructor so that the
         /// scheduler can instantiate the class whenever it needs.
@@ -67,11 +68,11 @@ namespace Rock.Jobs
 
             List<Exception> rockCleanupExceptions = new List<Exception>();
 
-            Dictionary<string, int> databaseRowsDeleted = new Dictionary<string, int>();
+            Dictionary<string, int> databaseRowsCleanedUp = new Dictionary<string, int>();
 
             try
             {
-                databaseRowsDeleted.Add( "Exception Log", PurgeExceptionLog( dataMap ) );
+                databaseRowsCleanedUp.Add( "Exception Log", PurgeExceptionLog( dataMap ) );
             }
             catch ( Exception ex )
             {
@@ -80,7 +81,7 @@ namespace Rock.Jobs
 
             try
             {
-                databaseRowsDeleted.Add( "Expired Entity Set", CleanupExpiredEntitySets( dataMap ) );
+                databaseRowsCleanedUp.Add( "Expired Entity Set", CleanupExpiredEntitySets( dataMap ) );
             }
             catch ( Exception ex )
             {
@@ -89,7 +90,7 @@ namespace Rock.Jobs
 
             try
             {
-                databaseRowsDeleted.Add( "Old Interaction", CleanupInteractions( dataMap ) );
+                databaseRowsCleanedUp.Add( "Old Interaction", CleanupInteractions( dataMap ) );
             }
             catch ( Exception ex )
             {
@@ -98,7 +99,7 @@ namespace Rock.Jobs
 
             try
             {
-                databaseRowsDeleted.Add( "Audit Log", PurgeAuditLog( dataMap ) );
+                databaseRowsCleanedUp.Add( "Audit Log", PurgeAuditLog( dataMap ) );
             }
             catch ( Exception ex )
             {
@@ -135,7 +136,7 @@ namespace Rock.Jobs
 
             try
             {
-                databaseRowsDeleted.Add( "Temporary Registration", CleanUpTemporaryRegistrations() );
+                databaseRowsCleanedUp.Add( "Temporary Registration", CleanUpTemporaryRegistrations() );
             }
             catch ( Exception ex )
             {
@@ -144,7 +145,7 @@ namespace Rock.Jobs
 
             try
             {
-                databaseRowsDeleted.Add( "Workflow", CleanUpWorkflows( dataMap ) );
+                databaseRowsCleanedUp.Add( "Workflow", CleanUpWorkflows( dataMap ) );
             }
             catch ( Exception ex )
             {
@@ -153,7 +154,7 @@ namespace Rock.Jobs
 
             try
             {
-                databaseRowsDeleted.Add( "Workflow Log", CleanUpWorkflowLogs( dataMap ) );
+                databaseRowsCleanedUp.Add( "Workflow Log", CleanUpWorkflowLogs( dataMap ) );
             }
             catch ( Exception ex )
             {
@@ -162,7 +163,7 @@ namespace Rock.Jobs
 
             try
             {
-                databaseRowsDeleted.Add( "Orphaned Attribute Value", CleanupOrphanedAttributes( dataMap ) );
+                databaseRowsCleanedUp.Add( "Orphaned Attribute Value", CleanupOrphanedAttributes( dataMap ) );
             }
             catch ( Exception ex )
             {
@@ -171,7 +172,7 @@ namespace Rock.Jobs
 
             try
             {
-                databaseRowsDeleted.Add( "Transient Communication", CleanupTransientCommunications( dataMap ) );
+                databaseRowsCleanedUp.Add( "Transient Communication", CleanupTransientCommunications( dataMap ) );
             }
             catch ( Exception ex )
             {
@@ -180,16 +181,25 @@ namespace Rock.Jobs
 
             try
             {
-                databaseRowsDeleted.Add( "Person Token", CleanupPersonTokens( dataMap ) );
+                databaseRowsCleanedUp.Add( "Missing Financial Transaction Currency", CleanupFinancialTransactionNullCurrency( dataMap ) );
+            }
+            catch ( Exception ex )
+            {
+                rockCleanupExceptions.Add( new Exception( "Exception in CleanupFinancialTransactionNullCurrency", ex ) );
+            }
+
+            try
+            {
+                databaseRowsCleanedUp.Add( "Person Token", CleanupPersonTokens( dataMap ) );
             }
             catch ( Exception ex )
             {
                 rockCleanupExceptions.Add( new Exception( "Exception in CleanupPersonTokens", ex ) );
             }
 
-            if ( databaseRowsDeleted.Any( a => a.Value > 0 ) )
+            if ( databaseRowsCleanedUp.Any( a => a.Value > 0 ) )
             {
-                context.Result = string.Format( "Rock Cleanup cleaned up {0}", databaseRowsDeleted.Where( a => a.Value > 0 ).Select( a => $"{a.Value} {a.Key.PluralizeIf( a.Value != 1 )}" ).ToList().AsDelimited( ", ", " and " ) );
+                context.Result = string.Format( "Rock Cleanup cleaned up {0}", databaseRowsCleanedUp.Where( a => a.Value > 0 ).Select( a => $"{a.Value} {a.Key.PluralizeIf( a.Value != 1 )}" ).ToList().AsDelimited( ", ", " and " ) );
             }
             else
             {
@@ -223,6 +233,8 @@ namespace Rock.Jobs
 
                 personRockContext.SaveChanges();
             }
+
+            AddMissingAlternateIds();
 
             using ( var personRockContext = new Rock.Data.RockContext() )
             {
@@ -277,16 +289,16 @@ namespace Rock.Jobs
 
             //// Add any missing Implied/Known relationship groups
             // Known Relationship Group
-            AddMissingRelationshipGroups( GroupTypeCache.Read( Rock.SystemGuid.GroupType.GROUPTYPE_KNOWN_RELATIONSHIPS ), Rock.SystemGuid.GroupRole.GROUPROLE_KNOWN_RELATIONSHIPS_OWNER.AsGuid() );
+            AddMissingRelationshipGroups( GroupTypeCache.Get( Rock.SystemGuid.GroupType.GROUPTYPE_KNOWN_RELATIONSHIPS ), Rock.SystemGuid.GroupRole.GROUPROLE_KNOWN_RELATIONSHIPS_OWNER.AsGuid() );
 
             // Implied Relationship Group
-            AddMissingRelationshipGroups( GroupTypeCache.Read( Rock.SystemGuid.GroupType.GROUPTYPE_IMPLIED_RELATIONSHIPS ), Rock.SystemGuid.GroupRole.GROUPROLE_IMPLIED_RELATIONSHIPS_OWNER.AsGuid() );
+            AddMissingRelationshipGroups( GroupTypeCache.Get( Rock.SystemGuid.GroupType.GROUPTYPE_PEER_NETWORK ), Rock.SystemGuid.GroupRole.GROUPROLE_PEER_NETWORK_OWNER.AsGuid() );
 
             // Find family groups that have no members or that have only 'inactive' people (record status) and mark the groups inactive.
             using ( var familyRockContext = new Rock.Data.RockContext() )
             {
                 int familyGroupTypeId = GroupTypeCache.GetFamilyGroupType().Id;
-                int recordStatusInactiveValueId = DefinedValueCache.Read( Rock.SystemGuid.DefinedValue.PERSON_RECORD_STATUS_INACTIVE.AsGuid() ).Id;
+                int recordStatusInactiveValueId = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_STATUS_INACTIVE.AsGuid() ).Id;
 
                 var activeFamilyWithNoActiveMembers = new GroupService( familyRockContext ).Queryable()
                     .Where( a => a.GroupTypeId == familyGroupTypeId && a.IsActive == true )
@@ -298,6 +310,64 @@ namespace Rock.Jobs
                 {
                     IsActive = false
                 } );
+            }
+        }
+
+        /// <summary>
+        /// Adds any missing person alternate ids; limited to 150k records per run
+        /// to avoid any possible memory issues. Processes about 150k records
+        /// in 52 seconds.
+        /// </summary>
+        private static void AddMissingAlternateIds()
+        {
+            using ( var personRockContext = new Rock.Data.RockContext() )
+            {
+                var personService = new PersonService( personRockContext );
+                int alternateValueId = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_SEARCH_KEYS_ALTERNATE_ID.AsGuid() ).Id;
+                var personSearchKeyService = new PersonSearchKeyService( personRockContext );
+                var alternateKeyQuery = personSearchKeyService.Queryable().AsNoTracking().Where( a => a.SearchTypeValueId == alternateValueId );
+
+                IQueryable<Person> personQuery = personService.Queryable( includeDeceased: true ).AsNoTracking();
+
+                // Make a list of items that we're going to bulk insert.
+                var itemsToInsert = new List<PersonSearchKey>();
+
+                // Get all existing keys so we can keep track and quickly check them while we're bulk adding new ones.
+                var keys = new HashSet<string>( personSearchKeyService.Queryable().AsNoTracking()
+                    .Where( a => a.SearchTypeValueId == alternateValueId )
+                    .Select( a => a.SearchValue )
+                    .ToList() );
+
+                string alternateId = string.Empty;
+
+                // Find everyone who does not yet have an alternateKey.
+                foreach ( var person in personQuery = personQuery
+                    .Where( p => !alternateKeyQuery.Any( f => f.PersonAlias.PersonId == p.Id ) )
+                    .Take( 150000 ) )
+                {
+                    // Regenerate key if it already exists.
+                    do
+                    {
+                        alternateId = PersonSearchKeyService.GenerateRandomAlternateId();
+                    } while ( keys.Contains( alternateId ) );
+
+                    keys.Add( alternateId );
+
+                    itemsToInsert.Add(
+                        new PersonSearchKey()
+                        {
+                            PersonAliasId = person.PrimaryAliasId,
+                            SearchTypeValueId = alternateValueId,
+                            SearchValue = alternateId
+                        }
+                    );
+                }
+
+                if ( itemsToInsert.Count > 0 )
+                {
+                    // Now add them in one bulk insert.
+                    personRockContext.BulkInsert( itemsToInsert );
+                }
             }
         }
 
@@ -691,7 +761,7 @@ WHERE ic.ChannelId = @channelId
                 AttributeMatrixService attributeMatrixService = new AttributeMatrixService( rockContext );
                 AttributeMatrixItemService attributeMatrixItemService = new AttributeMatrixItemService( rockContext );
 
-                var matrixFieldTypeId = FieldTypeCache.Read<MatrixFieldType>().Id;
+                var matrixFieldTypeId = FieldTypeCache.Get<MatrixFieldType>().Id;
                 // get a list of attribute Matrix Guids that are actually in use
                 var usedAttributeMatrices = new AttributeValueService( rockContext ).Queryable().Where( a => a.Attribute.FieldTypeId == matrixFieldTypeId ).Select( a => a.Value ).ToList().AsGuidList();
 
@@ -714,7 +784,7 @@ WHERE ic.ChannelId = @channelId
                 Type entityType = cachedType.GetEntityType();
                 if ( entityType != null &&
                     typeof( IEntity ).IsAssignableFrom( entityType ) &&
-                    typeof( IHasAttributes ).IsAssignableFrom( entityType ) &&
+                    typeof( Attribute.IHasAttributes ).IsAssignableFrom( entityType ) &&
                     !entityType.Namespace.Equals( "Rock.Rest.Controllers" ) )
                 {
                     try
@@ -752,7 +822,7 @@ WHERE ic.ChannelId = @channelId
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        private int CleanupOrphanedAttributeValuesForEntityType<T>() where T : Rock.Data.Entity<T>, IHasAttributes, new()
+        private int CleanupOrphanedAttributeValuesForEntityType<T>() where T : Rock.Data.Entity<T>,  Attribute.IHasAttributes, new()
         {
             int recordsDeleted = 0;
 
@@ -789,6 +859,28 @@ WHERE ic.ChannelId = @channelId
             totalRowsDeleted = rockContext.BulkDelete( communicationsToDelete, batchAmount );
 
             return totalRowsDeleted;
+        }
+
+        /// <summary>
+        /// Cleanups the financial transaction null currency.
+        /// </summary>
+        /// <param name="dataMap">The data map.</param>
+        /// <returns></returns>
+        private int CleanupFinancialTransactionNullCurrency( JobDataMap dataMap )
+        {
+            int totalRowsUpdated = 0;
+            var rockContext = new Rock.Data.RockContext();
+
+            int? currencyTypeUnknownId = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.CURRENCY_TYPE_UNKNOWN.AsGuid() )?.Id;
+
+            if ( currencyTypeUnknownId.HasValue )
+            {
+                var financialPaymentDetailsToUpdate = new FinancialPaymentDetailService( rockContext ).Queryable().Where( a => a.CurrencyTypeValueId == null );
+
+                totalRowsUpdated = rockContext.BulkUpdate( financialPaymentDetailsToUpdate, a => new FinancialPaymentDetail { CurrencyTypeValueId = currencyTypeUnknownId.Value } );
+            }
+
+            return totalRowsUpdated;
         }
 
         /// <summary>
@@ -904,8 +996,8 @@ WHERE ExpireDateTime IS NOT NULL
                 // if IO Exception thrown and this is not a retry attempt
                 if ( !isRetryAttempt )
                 {
-                    // have thread sleep for 10 ms and retry delete
-                    System.Threading.Thread.Sleep( 10 );
+                    // wait for 10 ms and retry delete
+                    System.Threading.Tasks.Task.Delay( 10 ).Wait();
                     DeleteDirectory( directoryPath, true );
                 }
             }
@@ -932,8 +1024,8 @@ WHERE ExpireDateTime IS NOT NULL
                 // If an IO exception has occurred and this is not a retry attempt
                 if ( !isRetryAttempt )
                 {
-                    // have the thread sleep for 10 ms and retry delete.
-                    System.Threading.Thread.Sleep( 10 );
+                    // wait for 10 ms and retry delete.
+                    System.Threading.Tasks.Task.Delay( 10 ).Wait();
                     DeleteFile( filePath, true );
                 }
             }

@@ -173,7 +173,7 @@ namespace RockWeb.Blocks.Prayer
         /// </summary>
         private void GetNoteType()
         {
-            noteType = NoteTypeCache.Read( Rock.SystemGuid.NoteType.PRAYER_COMMENT.AsGuid() );
+            noteType = NoteTypeCache.Get( Rock.SystemGuid.NoteType.PRAYER_COMMENT.AsGuid() );
         }
 
         /// <summary>

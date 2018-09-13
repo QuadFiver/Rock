@@ -121,7 +121,7 @@ namespace Rock.Communication
         /// <param name="to">To.</param>
         public void AddRecipient( string to )
         {
-            if ( to.IsNotNullOrWhitespace() )
+            if ( to.IsNotNullOrWhiteSpace() )
             {
                 _recipients.Add( new RecipientData( to ) );
             }
@@ -255,7 +255,7 @@ namespace Rock.Communication
             {
                 if ( this._recipients.Any() )
                 {
-                    var mediumEntity = EntityTypeCache.Read( MediumEntityTypeId );
+                    var mediumEntity = EntityTypeCache.Get( MediumEntityTypeId );
                     if ( mediumEntity != null )
                     {
                         var medium = MediumContainer.GetComponent( mediumEntity.Name );

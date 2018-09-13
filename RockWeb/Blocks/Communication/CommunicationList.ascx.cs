@@ -454,7 +454,7 @@ namespace RockWeb.Blocks.Communication
                 queryable = queryable.OrderByDescending( c => c.SendDateTime );
             }
 
-            gCommunication.EntityTypeId = EntityTypeCache.Read<Rock.Model.Communication>().Id;
+            gCommunication.EntityTypeId = EntityTypeCache.Get<Rock.Model.Communication>().Id;
             nbBindError.Text = string.Empty;
 
             try

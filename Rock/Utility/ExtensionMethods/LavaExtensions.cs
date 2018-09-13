@@ -24,7 +24,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using DotLiquid;
-
+using Rock.Attribute;
 using Rock.Data;
 using Rock.Model;
 using Rock.Web.Cache;
@@ -142,7 +142,7 @@ namespace Rock
             if ( myObject is IEntity )
             {
                 var entity = myObject as IEntity;
-                var entityTypeCache = EntityTypeCache.Read( entityType, false, rockContext );
+                var entityTypeCache = EntityTypeCache.Get( entityType, false, rockContext );
                 if ( entity != null && entityTypeCache != null )
                 {
                     if ( entityHistory == null )
@@ -242,7 +242,13 @@ namespace Rock
                                     var entryCollection = entityDbContext.Entry( myObject )?.Collection( key );
                                     if ( entryCollection.EntityEntry.State == System.Data.Entity.EntityState.Detached )
                                     {
-                                        propValue = "...";
+                                        // create a sample since we can't fetch real data
+                                        Type listOfType = propType.GenericTypeArguments[0];
+                                        var sampleListType = typeof( List<> ).MakeGenericType( listOfType );
+                                        var sampleList = Activator.CreateInstance(sampleListType) as IList;
+                                        var sampleItem = Activator.CreateInstance( listOfType );
+                                        sampleList.Add( sampleItem );
+                                        propValue = sampleList;
                                     }
                                     else
                                     {
@@ -295,9 +301,9 @@ namespace Rock
                 }
 
                 // Add the attributes if this object has attributes
-                if ( liquidObject is Rock.Attribute.IHasAttributes )
+                if ( liquidObject is IHasAttributes )
                 {
-                    var objWithAttrs = (Rock.Attribute.IHasAttributes)liquidObject;
+                    var objWithAttrs = (IHasAttributes)liquidObject;
                     if ( objWithAttrs.Attributes == null )
                     {
                         rockContext = rockContext ?? new RockContext();
@@ -535,18 +541,18 @@ namespace Rock
         /// <returns></returns>
         public static string ResolveMergeFields( this string content, IDictionary<string, object> mergeObjects, Person currentPersonOverride )
         {
-            var enabledCommands = GlobalAttributesCache.Read().GetValue( "DefaultEnabledLavaCommands" );
+            var enabledCommands = GlobalAttributesCache.Get().GetValue( "DefaultEnabledLavaCommands" );
             return content.ResolveMergeFields( mergeObjects, currentPersonOverride, enabledCommands );
         }
 
         /// <summary>
-        /// Resolves the merge fields.
+        /// Checks for merge fields and then resolves them.
         /// </summary>
         /// <param name="content">The content.</param>
         /// <param name="mergeObjects">The merge objects.</param>
         /// <param name="currentPersonOverride">The current person override.</param>
         /// <param name="enabledLavaCommands">The enabled lava commands.</param>
-        /// <returns></returns>
+        /// <returns>If lava present returns merged string, if no lava returns original string, if null returns empty string</returns>
         public static string ResolveMergeFields( this string content, IDictionary<string, object> mergeObjects, Person currentPersonOverride, string enabledLavaCommands )
         {
             try
@@ -559,7 +565,7 @@ namespace Rock
                 // If there have not been any EnabledLavaCommands explicitely set, then use the global defaults.
                 if ( enabledLavaCommands == null )
                 {
-                    enabledLavaCommands = GlobalAttributesCache.Read().GetValue( "DefaultEnabledLavaCommands" );
+                    enabledLavaCommands = GlobalAttributesCache.Value( "DefaultEnabledLavaCommands" );
                 }
 
                 Template template = GetTemplate( content );
@@ -569,6 +575,7 @@ namespace Rock
             }
             catch ( Exception ex )
             {
+                ExceptionLogService.LogException( ex );
                 return "Error resolving Lava merge fields: " + ex.Message;
             }
         }
@@ -603,7 +610,7 @@ namespace Rock
         /// <returns></returns>
         public static string ResolveMergeFields( this string content, IDictionary<string, object> mergeObjects, bool encodeStrings = false, bool throwExceptionOnErrors = false )
         {
-            var enabledCommands = GlobalAttributesCache.Read().GetValue( "DefaultEnabledLavaCommands" );
+            var enabledCommands = GlobalAttributesCache.Get().GetValue( "DefaultEnabledLavaCommands" );
             return content.ResolveMergeFields( mergeObjects, enabledCommands, encodeStrings, throwExceptionOnErrors );
         }
 
@@ -625,7 +632,7 @@ namespace Rock
                     return content ?? string.Empty;
                 }
 
-                if ( GlobalAttributesCache.Read().LavaSupportLevel == Lava.LavaSupportLevel.LegacyWithWarning && mergeObjects.ContainsKey( "GlobalAttribute" ) )
+                if ( GlobalAttributesCache.Get().LavaSupportLevel == Lava.LavaSupportLevel.LegacyWithWarning && mergeObjects.ContainsKey( "GlobalAttribute" ) )
                 {
                     if ( hasLegacyGlobalAttributeLavaMergeFields.IsMatch( content ) )
                     {
@@ -674,6 +681,7 @@ namespace Rock
                 }
                 else
                 {
+                    ExceptionLogService.LogException( ex );
                     return "Error resolving Lava merge fields: " + ex.Message;
                 }
             }
@@ -693,7 +701,7 @@ namespace Rock
             }
 
             // Get template from cache
-            var template = LavaTemplateCache.Read( content ).Template;
+            var template = LavaTemplateCache.Get( content ).Template;
 
             // Clear any previous errors
             template.Errors.Clear();
@@ -721,6 +729,11 @@ namespace Rock
         private static Regex hasLavaMergeFields = new Regex( @"(?<=\{).+(?<=\})", RegexOptions.Compiled );
 
         /// <summary>
+        /// Compiled RegEx for detecting if a string has Lava {% %} command fields
+        /// </summary>
+        private static Regex hasLavaCommandFields = new Regex( @"(?<=\{%).+(?<=%\})", RegexOptions.Compiled );
+
+        /// <summary>
         /// Compiled RegEx for detecting if a string uses the Legacy "GlobalAttribute." syntax
         /// </summary>
         private static Regex hasLegacyGlobalAttributeLavaMergeFields = new Regex( @"(?<=\{).+GlobalAttribute.+(?<=\})", RegexOptions.Compiled );
@@ -734,11 +747,36 @@ namespace Rock
         public static bool HasMergeFields( this string content )
         {
             if ( content == null )
+            {
                 return false;
+            }
 
-            // If there's no merge codes, just return the content
-            if (!hasLavaMergeFields.IsMatch( content ))
+            // If there are no lava codes, return false
+            if ( !hasLavaMergeFields.IsMatch( content ) )
+            {
                 return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Determines whether the string potentially has lava command {% %} fields in it.
+        /// </summary>
+        /// <param name="content">The content.</param>
+        /// <returns></returns>
+        public static bool HasLavaCommandFields( this string content )
+        {
+            if ( content == null )
+            {
+                return false;
+            }
+
+            // If there are no lava command fields, return false
+            if ( !hasLavaCommandFields.IsMatch( content ) )
+            {
+                return false;
+            }
 
             return true;
         }

@@ -39,7 +39,7 @@ namespace Rock.Web.UI.Controls
             ChartStyle chartStyle = null;
             if ( chartStyleDefinedValueGuid.HasValue )
             {
-                var definedValue = DefinedValueCache.Read( chartStyleDefinedValueGuid.Value );
+                var definedValue = DefinedValueCache.Get( chartStyleDefinedValueGuid.Value );
                 if ( definedValue != null )
                 {
                     chartStyle = ChartStyle.CreateFromJson( definedValue.Value, definedValue.GetAttributeValue( "ChartStyle" ) );

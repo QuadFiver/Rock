@@ -263,7 +263,7 @@ namespace RockWeb.Blocks.Core
                     qryEntity = qryEntity.Take( fetchCount.Value );
                 }
 
-                var entityTypeCache = EntityTypeCache.Read( entitySet.EntityTypeId.Value );
+                var entityTypeCache = EntityTypeCache.Get( entitySet.EntityTypeId.Value );
                 bool isPersonEntityType = entityTypeCache != null && entityTypeCache.Guid == Rock.SystemGuid.EntityType.PERSON.AsGuid();
                 bool isGroupMemberEntityType = entityTypeCache != null && entityTypeCache.Guid == Rock.SystemGuid.EntityType.GROUP_MEMBER.AsGuid();
                 bool combineFamilyMembers = cbCombineFamilyMembers.Visible && cbCombineFamilyMembers.Checked;
@@ -500,7 +500,7 @@ namespace RockWeb.Blocks.Core
             {
                 var qry = entitySetService.GetEntityQuery( entitySetId ).Take( 15 );
 
-                EntityTypeCache itemEntityType = EntityTypeCache.Read( entitySet.EntityTypeId ?? 0 );
+                EntityTypeCache itemEntityType = EntityTypeCache.Get( entitySet.EntityTypeId ?? 0 );
                 gPreview.CreatePreviewColumns( itemEntityType.GetEntityType() );
 
                 gPreview.DataSource = qry.ToList();

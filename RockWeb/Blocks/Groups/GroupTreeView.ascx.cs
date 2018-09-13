@@ -79,7 +79,7 @@ namespace RockWeb.Blocks.Groups
             else
             {
                 hfPageRouteTemplate.Value = string.Empty;
-                var pageCache = PageCache.Read( detailPageReference.PageId );
+                var pageCache = PageCache.Get( detailPageReference.PageId );
                 if ( pageCache != null )
                 {
                     var route = pageCache.PageRoutes.FirstOrDefault( a => a.Id == detailPageReference.RouteId );
@@ -308,7 +308,7 @@ namespace RockWeb.Blocks.Groups
                             canAddChildGroup = selectedGroup.IsAuthorized( Authorization.EDIT, CurrentPerson );
                             if ( !canAddChildGroup )
                             {
-                                var groupType = GroupTypeCache.Read( selectedGroup.GroupTypeId );
+                                var groupType = GroupTypeCache.Get( selectedGroup.GroupTypeId );
                                 if ( groupType != null )
                                 {
                                     foreach ( var childGroupType in groupType.ChildGroupTypes )
@@ -429,7 +429,7 @@ namespace RockWeb.Blocks.Groups
                 var groupTypeIdIncludeList = new List<int>();
                 foreach ( Guid guid in groupTypeIncludeGuids )
                 {
-                    var groupType = GroupTypeCache.Read( guid );
+                    var groupType = GroupTypeCache.Get( guid );
                     if ( groupType != null )
                     {
                         groupTypeIdIncludeList.Add( groupType.Id );
@@ -446,7 +446,7 @@ namespace RockWeb.Blocks.Groups
                 var groupTypeIdExcludeList = new List<int>();
                 foreach ( Guid guid in groupTypeExcludeGuids )
                 {
-                    var groupType = GroupTypeCache.Read( guid );
+                    var groupType = GroupTypeCache.Get( guid );
                     if ( groupType != null )
                     {
                         groupTypeIdExcludeList.Add( groupType.Id );

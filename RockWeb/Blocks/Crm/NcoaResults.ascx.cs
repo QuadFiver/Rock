@@ -196,7 +196,7 @@ namespace RockWeb.Blocks.Crm
                     }
                 case "Campus":
                     {
-                        var campus = CampusCache.Read( e.Value.AsInteger() );
+                        var campus = CampusCache.Get( e.Value.AsInteger() );
                         if ( campus != null )
                         {
                             e.Value = campus.Name;
@@ -399,7 +399,7 @@ namespace RockWeb.Blocks.Crm
             var campusId = gfNcoaFilter.GetUserPreference( "Campus" ).AsIntegerOrNull();
             if ( campusId.HasValue )
             {
-                var familyGroupType = GroupTypeCache.Read( Rock.SystemGuid.GroupType.GROUPTYPE_FAMILY.AsGuid() );
+                var familyGroupType = GroupTypeCache.Get( Rock.SystemGuid.GroupType.GROUPTYPE_FAMILY.AsGuid() );
                 var personAliasQuery = new PersonAliasService( rockContext ).Queryable().AsNoTracking();
                 var campusQuery = new GroupMemberService( rockContext )
                     .Queryable().AsNoTracking()

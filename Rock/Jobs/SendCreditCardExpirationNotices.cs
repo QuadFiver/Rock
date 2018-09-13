@@ -27,8 +27,8 @@ using Rock.Attribute;
 using Rock.Communication;
 using Rock.Data;
 using Rock.Model;
-using Rock.Security;
 using Rock.Web.Cache;
+using Rock.Security;
 
 namespace Rock.Jobs
 {
@@ -77,7 +77,7 @@ namespace Rock.Jobs
 
             if ( workflowGuid != null )
             {
-                workflowType = WorkflowTypeCache.Read( workflowGuid.Value );
+                workflowType = WorkflowTypeCache.Get( workflowGuid.Value );
             }
 
             var qry = new FinancialScheduledTransactionService( rockContext )
@@ -123,6 +123,12 @@ namespace Rock.Jobs
                         var recipients = new List<RecipientData>();
                         var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( null );
                         var person = transaction.AuthorizedPersonAlias.Person;
+
+                        if ( !person.IsEmailActive || person.Email.IsNullOrWhiteSpace() || person.EmailPreference == EmailPreference.DoNotEmail )
+                        {
+                            continue;
+                        }
+
                         mergeFields.Add( "Person", person );
                         mergeFields.Add( "Card", acctNum );
                         mergeFields.Add( "Expiring", expirationDate );

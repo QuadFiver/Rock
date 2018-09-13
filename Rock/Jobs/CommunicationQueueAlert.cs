@@ -87,7 +87,7 @@ namespace Rock.Jobs
 
         private int GetJobAttributeValue( string key, int defaultValue, RockContext rockContext )
         {
-            var jobEntityType = EntityTypeCache.Read( typeof( Rock.Model.ServiceJob ) );
+            var jobEntityType = EntityTypeCache.Get( typeof( Rock.Model.ServiceJob ) );
 
             int intValue = 3;
             var jobExpirationAttribute = new AttributeService( rockContext )

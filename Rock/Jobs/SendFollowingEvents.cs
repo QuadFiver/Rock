@@ -93,7 +93,10 @@ namespace Rock.Jobs
                             m.GroupMemberStatus == GroupMemberStatus.Active &&
                             m.Person != null &&
                             m.Person.Email != null &&
-                            m.Person.Email != "" )
+                            m.Person.Email != "" &&
+                            m.Person.EmailPreference != EmailPreference.DoNotEmail &&
+                            m.Person.IsEmailActive
+                         )
                         .Select( m => m.PersonId )
                         .Distinct()
                         .ToList();
@@ -165,7 +168,7 @@ namespace Rock.Jobs
                     foreach ( var keyVal in followedEntityIds )
                     {
                         // Get the entitytype
-                        EntityTypeCache itemEntityType = EntityTypeCache.Read( keyVal.Key );
+                        EntityTypeCache itemEntityType = EntityTypeCache.Get( keyVal.Key );
                         if ( itemEntityType.AssemblyName != null )
                         {
                             // get the actual type of what is being followed 

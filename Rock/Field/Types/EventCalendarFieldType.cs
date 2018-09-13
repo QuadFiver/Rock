@@ -51,7 +51,7 @@ namespace Rock.Field.Types
 
             if ( !string.IsNullOrWhiteSpace( value ) )
             {
-                var eventCalendar = EventCalendarCache.Read( value.AsGuid() );
+                var eventCalendar = EventCalendarCache.Get( value.AsGuid() );
                 if ( eventCalendar != null )
                 {
                     formattedValue = eventCalendar.Name;
@@ -101,7 +101,7 @@ namespace Rock.Field.Types
                 int? eventCalendarId = eventCalendarPicker.SelectedEventCalendarId;
                 if (eventCalendarId.HasValue)
                 {
-                    var eventCalendar = EventCalendarCache.Read( eventCalendarId.Value );
+                    var eventCalendar = EventCalendarCache.Get( eventCalendarId.Value );
                     if (eventCalendar != null )
                     {
                         return eventCalendar.Guid.ToString();
@@ -128,7 +128,7 @@ namespace Rock.Field.Types
                 Guid guid = value.AsGuid();
 
                 // get the item (or null) and set it
-                var eventCalendar = EventCalendarCache.Read( guid );
+                var eventCalendar = EventCalendarCache.Get( guid );
                 eventCalendarPicker.SetValue( eventCalendar == null ? "0" : eventCalendar.Id.ToString() );
             }
         }
@@ -298,7 +298,7 @@ namespace Rock.Field.Types
         public int? GetEditValueAsEntityId( System.Web.UI.Control control, Dictionary<string, ConfigurationValue> configurationValues )
         {
             Guid guid = GetEditValue( control, configurationValues ).AsGuid();
-            var item = EventCalendarCache.Read( guid );
+            var item = EventCalendarCache.Get( guid );
             return item != null ? item.Id : (int?)null;
         }
 
@@ -313,7 +313,7 @@ namespace Rock.Field.Types
             EventCalendarCache item = null;
             if ( id.HasValue )
             {
-                item = EventCalendarCache.Read( id.Value );
+                item = EventCalendarCache.Get( id.Value );
             }
             string guidValue = item != null ? item.Guid.ToString() : string.Empty;
             SetEditValue( control, configurationValues, guidValue );

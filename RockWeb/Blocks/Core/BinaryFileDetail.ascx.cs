@@ -27,6 +27,7 @@ using Rock.Model;
 using Rock.Web.UI;
 using Rock.Security;
 using System.IO;
+using Rock.Web.Cache;
 
 namespace RockWeb.Blocks.Core
 {
@@ -123,7 +124,7 @@ namespace RockWeb.Blocks.Core
 
                     // create a rockContext for the workflow so that it can save it's changes, without 
                     var workflowRockContext = new RockContext();
-                    var workflowType = Rock.Web.Cache.WorkflowTypeCache.Read( workflowTypeGuid );
+                    var workflowType = WorkflowTypeCache.Get( workflowTypeGuid );
                     if ( workflowType != null && ( workflowType.IsActive ?? true ) )
                     {
                         var workflow = Workflow.Activate( workflowType, binaryFile.FileName );
@@ -347,11 +348,17 @@ namespace RockWeb.Blocks.Core
                     binaryFile.FileSize = uploadedBinaryFile.FileSize;
                     var memoryStream = new MemoryStream();
 
-                    // If this is a label file then we need to replace a string in the file that makes printing slower
+                    // If this is a label file then we need to cleanup some settings that most templates will use by default
                     if ( IsLabelFile() )
                     {
+                        // ^JUS will save changes to EEPROM, doing this for each label is not needed, slows printing dramatically, and shortens the printer's memory life.
+                        string label = uploadedBinaryFile.ContentsToString().Replace( "^JUS", string.Empty );
+
+                        // Use UTF-8 instead of ASCII
+                        label = label.Replace( "^CI0", "^CI28" );
+
                         var writer = new StreamWriter( memoryStream );
-                        writer.Write( uploadedBinaryFile.ContentsToString().Replace( "^JUS", string.Empty ) );
+                        writer.Write( label ); 
                         writer.Flush();
                     }
                     else
@@ -398,7 +405,7 @@ namespace RockWeb.Blocks.Core
                 binaryFile.SaveAttributeValues( rockContext );
             } );
 
-            Rock.CheckIn.KioskLabel.Flush( binaryFile.Guid );
+            Rock.CheckIn.KioskLabel.Remove( binaryFile.Guid );
 
             if ( !prevBinaryFileTypeId.Equals( binaryFile.BinaryFileTypeId ) )
             {
@@ -407,7 +414,7 @@ namespace RockWeb.Blocks.Core
                     ( prevBinaryFileTypeId.HasValue && prevBinaryFileTypeId.Value == checkInBinaryFileType.Id ) ||
                     ( binaryFile.BinaryFileTypeId.HasValue && binaryFile.BinaryFileTypeId.Value == checkInBinaryFileType.Id ) ) )
                 {
-                    Rock.CheckIn.KioskDevice.FlushAll();
+                    Rock.CheckIn.KioskDevice.Clear();
                 }
             }
 

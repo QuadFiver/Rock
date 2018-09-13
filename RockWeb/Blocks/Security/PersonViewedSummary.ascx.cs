@@ -190,7 +190,7 @@ namespace RockWeb.Blocks.Security
                         qry = qry.OrderByDescending( q => q.LastViewedDate );
                     }
 
-                    gViewed.EntityTypeId = EntityTypeCache.Read<PersonViewed>().Id;
+                    gViewed.EntityTypeId = EntityTypeCache.Get<PersonViewed>().Id;
                     gViewed.DataSource = qry.ToList();
                     gViewed.DataBind();
                 }
@@ -238,7 +238,7 @@ namespace RockWeb.Blocks.Security
                         qry = qry.OrderByDescending( q => q.LastViewedDate );
                     }
 
-                    gViewedBy.EntityTypeId = EntityTypeCache.Read<Person>().Id;
+                    gViewedBy.EntityTypeId = EntityTypeCache.Get<Person>().Id;
                     gViewedBy.DataSource = qry.ToList();
                     gViewedBy.DataBind();
                 }

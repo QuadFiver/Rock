@@ -100,7 +100,7 @@ namespace RockWeb.Blocks.Fundraising
             var rockContext = new RockContext();
             Group group = null;
             GroupMember groupMember = null;
-            int fundraisingOpportunityTypeId = GroupTypeCache.Read( Rock.SystemGuid.GroupType.GROUPTYPE_FUNDRAISINGOPPORTUNITY ).Id;
+            int fundraisingOpportunityTypeId = GroupTypeCache.Get( Rock.SystemGuid.GroupType.GROUPTYPE_FUNDRAISINGOPPORTUNITY ).Id;
 
             pnlView.Visible = true;
             hfGroupId.Value = groupId.ToStringSafe();

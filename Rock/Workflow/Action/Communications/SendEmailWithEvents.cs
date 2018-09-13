@@ -107,7 +107,7 @@ namespace Rock.Workflow.Action
                 Guid? guid = GetAttributeValue( action, "UnopenedTimeoutActivity" ).AsGuidOrNull();
                 if ( guid.HasValue )
                 {
-                    unopenedActivityType = WorkflowActivityTypeCache.Read( guid.Value );
+                    unopenedActivityType = WorkflowActivityTypeCache.Get( guid.Value );
                     unopenedTimeout = GetAttributeValue( action, "UnopenedTimeoutLength" ).AsIntegerOrNull();
 
                     if ( emailStatus != OPENED_STATUS &&
@@ -127,7 +127,7 @@ namespace Rock.Workflow.Action
                 guid = GetAttributeValue( action, "NoActionTimeoutActivity" ).AsGuidOrNull();
                 if ( guid.HasValue )
                 {
-                    noActionActivityType = WorkflowActivityTypeCache.Read( guid.Value );
+                    noActionActivityType = WorkflowActivityTypeCache.Get( guid.Value );
                     noActionTimeout = GetAttributeValue( action, "NoActionTimeoutLength" ).AsIntegerOrNull();
 
                     if ( emailStatus != CLICKED_STATUS &&
@@ -167,18 +167,16 @@ namespace Rock.Workflow.Action
                 attribute.EntityTypeQualifierValue = action.Activity.ActivityTypeId.ToString();
                 attribute.Name = "DateTime Sent";
                 attribute.Key = AttrKey;
-                attribute.FieldTypeId = FieldTypeCache.Read( Rock.SystemGuid.FieldType.TEXT.AsGuid() ).Id;
+                attribute.FieldTypeId = FieldTypeCache.Get( Rock.SystemGuid.FieldType.TEXT.AsGuid() ).Id;
 
                 // Need to save the attribute now (using different context) so that an attribute id is returned.
                 using ( var newRockContext = new RockContext() )
                 {
                     new AttributeService( newRockContext ).Add( attribute );
                     newRockContext.SaveChanges();
-                    AttributeCache.FlushEntityAttributes();
-                    WorkflowActivityTypeCache.Flush( action.Activity.ActivityTypeId );
                 }
 
-                action.Activity.Attributes.Add( AttrKey, AttributeCache.Read( attribute ) );
+                action.Activity.Attributes.Add( AttrKey, AttributeCache.Get( attribute ) );
                 var attributeValue = new AttributeValueCache();
                 attributeValue.AttributeId = attribute.Id;
                 attributeValue.Value = RockDateTime.Now.ToString( "o" );
@@ -220,18 +218,16 @@ namespace Rock.Workflow.Action
                 attribute.EntityTypeQualifierValue = action.Activity.ActivityTypeId.ToString();
                 attribute.Name = "Email Status";
                 attribute.Key = AttrKey;
-                attribute.FieldTypeId = FieldTypeCache.Read( Rock.SystemGuid.FieldType.TEXT.AsGuid() ).Id;
+                attribute.FieldTypeId = FieldTypeCache.Get( Rock.SystemGuid.FieldType.TEXT.AsGuid() ).Id;
 
                 // Need to save the attribute now (using different context) so that an attribute id is returned.
                 using ( var newRockContext = new RockContext() )
                 {
                     new AttributeService( newRockContext ).Add( attribute );
                     newRockContext.SaveChanges();
-                    AttributeCache.FlushEntityAttributes();
-                    WorkflowActivityTypeCache.Flush( action.Activity.ActivityTypeId );
                 }
 
-                action.Activity.Attributes.Add( AttrKey, AttributeCache.Read( attribute ) );
+                action.Activity.Attributes.Add( AttrKey, AttributeCache.Get( attribute ) );
                 var attributeValue = new AttributeValueCache();
                 attributeValue.AttributeId = attribute.Id;
                 attributeValue.Value = string.Empty;
@@ -260,7 +256,7 @@ namespace Rock.Workflow.Action
             Guid? fromGuid = fromValue.AsGuidOrNull();
             if ( fromGuid.HasValue )
             {
-                var attribute = AttributeCache.Read( fromGuid.Value, rockContext );
+                var attribute = AttributeCache.Get( fromGuid.Value, rockContext );
                 if ( attribute != null )
                 {
                     string fromAttributeValue = action.GetWorklowAttributeValue( fromGuid.Value );
@@ -300,7 +296,7 @@ namespace Rock.Workflow.Action
             Guid? guid = to.AsGuidOrNull();
             if ( guid.HasValue )
             {
-                var attribute = AttributeCache.Read( guid.Value, rockContext );
+                var attribute = AttributeCache.Get( guid.Value, rockContext );
                 if ( attribute != null )
                 {
                     string toValue = action.GetWorklowAttributeValue( guid.Value );
@@ -435,7 +431,7 @@ namespace Rock.Workflow.Action
                 if ( activityGuid.HasValue )
                 {
                     var workflow = action.Activity.Workflow;
-                    var activityType = WorkflowActivityTypeCache.Read( activityGuid.Value );
+                    var activityType = WorkflowActivityTypeCache.Get( activityGuid.Value );
                     if ( workflow != null && activityType != null )
                     {
                         WorkflowActivity.Activate( activityType, workflow );

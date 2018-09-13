@@ -75,7 +75,7 @@ namespace RockWeb.Blocks.Finance
             else
             {
                 hfPageRouteTemplate.Value = string.Empty;
-                var pageCache = PageCache.Read( detailPageReference.PageId );
+                var pageCache = PageCache.Get( detailPageReference.PageId );
                 if ( pageCache != null )
                 {
                     var route = pageCache.PageRoutes.FirstOrDefault( a => a.Id == detailPageReference.RouteId );

@@ -126,7 +126,7 @@ namespace RockWeb.Blocks.CheckIn
         {
             CurrentCheckInState.CheckIn.UserEnteredSearch = true;
             CurrentCheckInState.CheckIn.ConfirmSingleFamily = true;
-            CurrentCheckInState.CheckIn.SearchType = DefinedValueCache.Read( Rock.SystemGuid.DefinedValue.CHECKIN_SEARCH_TYPE_NAME );
+            CurrentCheckInState.CheckIn.SearchType = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.CHECKIN_SEARCH_TYPE_NAME );
             CurrentCheckInState.CheckIn.SearchValue = txtName.Text;
 
             ProcessSelection();
@@ -157,7 +157,7 @@ namespace RockWeb.Blocks.CheckIn
 
                 CurrentCheckInState.CheckIn.UserEnteredSearch = true;
                 CurrentCheckInState.CheckIn.ConfirmSingleFamily = true;
-                CurrentCheckInState.CheckIn.SearchType = DefinedValueCache.Read( Rock.SystemGuid.DefinedValue.CHECKIN_SEARCH_TYPE_PHONE_NUMBER );
+                CurrentCheckInState.CheckIn.SearchType = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.CHECKIN_SEARCH_TYPE_PHONE_NUMBER );
                 CurrentCheckInState.CheckIn.SearchValue = searchInput;
 
                 if ( ProcessSelection() && Request.Cookies[CheckInCookie.ISMOBILE] != null )

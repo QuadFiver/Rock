@@ -63,7 +63,7 @@ namespace Rock.Workflow.Action
 
             if ( guidGroupAttribute.HasValue )
             {
-                var attributeGroup = AttributeCache.Read( guidGroupAttribute.Value, rockContext );
+                var attributeGroup = AttributeCache.Get( guidGroupAttribute.Value, rockContext );
                 if ( attributeGroup != null )
                 {
                     var groupGuid = action.GetWorklowAttributeValue( guidGroupAttribute.Value ).AsGuidOrNull();
@@ -71,10 +71,11 @@ namespace Rock.Workflow.Action
                     if ( groupGuid.HasValue )
                     {
                         group = new GroupService( rockContext ).Get( groupGuid.Value );
+
                         if ( group != null )
                         {
                             // use the group's grouptype's default group role if a group role wasn't specified
-                            groupRoleId = group.GroupType.DefaultGroupRoleId;
+                            groupRoleId = GroupTypeCache.Get( group.GroupTypeId ).DefaultGroupRoleId;
                         }
                     }
                 }
@@ -98,7 +99,7 @@ namespace Rock.Workflow.Action
 
             if ( guidPersonAttribute.HasValue )
             {
-                var attributePerson = AttributeCache.Read( guidPersonAttribute.Value, rockContext );
+                var attributePerson = AttributeCache.Get( guidPersonAttribute.Value, rockContext );
                 if ( attributePerson != null )
                 {
                     string attributePersonValue = action.GetWorklowAttributeValue( guidPersonAttribute.Value );
@@ -151,11 +152,6 @@ namespace Rock.Workflow.Action
                 if ( groupMember.IsValidGroupMember( rockContext ) )
                 {
                     rockContext.SaveChanges();
-
-                    if ( group.IsSecurityRole || group.GroupType.Guid.Equals( Rock.SystemGuid.GroupType.GROUPTYPE_SECURITY_ROLE.AsGuid() ) )
-                    {
-                        Rock.Security.Role.Flush( group.Id );
-                    }
                 }
                 else
                 {

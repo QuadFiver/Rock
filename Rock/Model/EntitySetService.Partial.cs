@@ -42,7 +42,7 @@ namespace Rock.Model
                 return null;
             }
 
-            EntityTypeCache itemEntityType = EntityTypeCache.Read( entitySet.EntityTypeId.Value );
+            EntityTypeCache itemEntityType = EntityTypeCache.Get( entitySet.EntityTypeId.Value );
 
             var rockContext = this.Context as RockContext;
             var entitySetItemsService = new EntitySetItemService( rockContext );

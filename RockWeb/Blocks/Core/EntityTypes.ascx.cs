@@ -222,8 +222,6 @@ namespace RockWeb.Blocks.Core
 
             rockContext.SaveChanges();
 
-            EntityTypeCache.Flush( entityType.Id );
-
             hfEntityTypeId.Value = string.Empty;
 
             HideDialog();

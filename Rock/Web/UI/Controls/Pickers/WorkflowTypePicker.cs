@@ -44,7 +44,7 @@ namespace Rock.Web.UI.Controls
         protected override void OnInit( EventArgs e )
         {
             ItemRestUrlExtraParams = "?getCategorizedItems=true&showUnnamedEntityItems=true&showCategoriesThatHaveNoChildren=false";
-            ItemRestUrlExtraParams += "&entityTypeId=" + EntityTypeCache.Read( Rock.SystemGuid.EntityType.WORKFLOW_TYPE.AsGuid() ).Id;
+            ItemRestUrlExtraParams += "&entityTypeId=" + EntityTypeCache.Get( Rock.SystemGuid.EntityType.WORKFLOW_TYPE.AsGuid() ).Id;
             ItemRestUrlExtraParams += "&includeInactiveItems=" + ShowInactive;
             this.IconCssClass = "fa fa-cogs";
             base.OnInit( e );
@@ -61,7 +61,7 @@ namespace Rock.Web.UI.Controls
                 ItemId = workflowType.Id.ToString();
 
                 string parentCategoryIds = string.Empty;
-                var parentCategory = workflowType.Category;
+                var parentCategory = workflowType.CategoryId.HasValue ? CategoryCache.Get( workflowType.CategoryId.Value ) : null;
                 while ( parentCategory != null )
                 {
                     parentCategoryIds = parentCategory.Id + "," + parentCategoryIds;
@@ -98,7 +98,11 @@ namespace Rock.Web.UI.Controls
                     {
                         ids.Add( workflowType.Id.ToString() );
                         names.Add( workflowType.Name );
-                        var parentCategory = workflowType.Category;
+                        CategoryCache parentCategory = null;
+                        if ( workflowType.CategoryId.HasValue )
+                        {
+                            parentCategory = CategoryCache.Get( workflowType.CategoryId.Value );
+                        }
 
                         while ( parentCategory != null )
                         {

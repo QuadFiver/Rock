@@ -109,7 +109,7 @@ namespace RockWeb.Blocks.Examples
 
                     if ( entityTypeId == null )
                     {
-                        var entityType = EntityTypeCache.Read( PageParameter( "EntityType" ).AsGuid() );
+                        var entityType = EntityTypeCache.Get( PageParameter( "EntityType" ).AsGuid() );
 
                         if ( entityType != null )
                         {
@@ -243,7 +243,7 @@ namespace RockWeb.Blocks.Examples
                 {
                     string category = "Other";
                     var domainAttr = type.GetCustomAttribute<RockDomainAttribute>( false );
-                    if ( domainAttr != null && domainAttr.Name.IsNotNullOrWhitespace() )
+                    if ( domainAttr != null && domainAttr.Name.IsNotNullOrWhiteSpace() )
                     {
                         category = domainAttr.Name;
                     }
@@ -293,7 +293,7 @@ namespace RockWeb.Blocks.Examples
                     lCategoryName.Text = category.Name + " Models";
                     pnlModels.Visible = true;
 
-                    entityTypeList = category.RockEntityIds.Select( a => EntityTypeCache.Read( a ) ).Where( a => a != null ).ToList();
+                    entityTypeList = category.RockEntityIds.Select( a => EntityTypeCache.Get( a ) ).Where( a => a != null ).ToList();
                     if ( entityTypeId.HasValue )
                     {
                         entityType = entityTypeList.Where( t => t.Id == entityTypeId.Value ).FirstOrDefault();

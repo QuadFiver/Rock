@@ -156,7 +156,7 @@ namespace Rock.Web.UI.Controls
                 foreach ( int value in values )
                 {
                     if ( this.Items.FindByValue( value.ToString() ) == null &&
-                    CampusCache.Read( value ) != null )
+                    CampusCache.Get( value ) != null )
                     {
                         LoadItems( values );
                         return;

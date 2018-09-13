@@ -128,6 +128,14 @@ namespace Rock.Web.UI.Controls
                 {
                     li.Selected = true;
                 }
+                else
+                {
+                    // if setting CampusId to NULL or 0, just default to the first item in the list (which should be nothing)
+                    if ( this.Items.Count > 0 )
+                    {
+                        this.SelectedIndex = 0;
+                    }
+                }
             }
         }
 
@@ -138,9 +146,9 @@ namespace Rock.Web.UI.Controls
         /// <param name="value">The value.</param>
         public void CheckItem( int? value )
         {
-            if ( value.HasValue &&
+            if ( value.HasValue && value.Value > 0 &&
                 this.Items.FindByValue( value.Value.ToString() ) == null &&
-                CampusCache.Read( value.Value ) != null )
+                CampusCache.Get( value.Value ) != null )
             {
                 LoadItems( value );
             }

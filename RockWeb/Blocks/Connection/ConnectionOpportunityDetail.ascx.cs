@@ -527,7 +527,7 @@ namespace RockWeb.Blocks.Connection
                     }
                 } );
 
-                ConnectionWorkflowService.FlushCachedTriggers();
+                ConnectionWorkflowService.RemoveCachedTriggers();
 
                 var qryParams = new Dictionary<string, string>();
                 qryParams["ConnectionTypeId"] = PageParameter( "ConnectionTypeId" );
@@ -741,7 +741,7 @@ namespace RockWeb.Blocks.Connection
                 GroupConfigsState.Add( groupConfig );
             }
 
-            var groupType = GroupTypeCache.Read( ddlGroupType.SelectedValueAsInt() ?? 0 );
+            var groupType = GroupTypeCache.Get( ddlGroupType.SelectedValueAsInt() ?? 0 );
             if ( groupType != null )
             {
                 groupConfig.GroupTypeId = groupType.Id;
@@ -896,7 +896,7 @@ namespace RockWeb.Blocks.Connection
             connectorGroup.CampusId = cpCampus.SelectedCampusId;
             if ( connectorGroup.CampusId.HasValue )
             {
-                var campus = CampusCache.Read( connectorGroup.CampusId.Value );
+                var campus = CampusCache.Get( connectorGroup.CampusId.Value );
                 if ( campus != null )
                 {
                     connectorGroup.CampusName = campus.Name;
@@ -1011,7 +1011,7 @@ namespace RockWeb.Blocks.Connection
                     {
                         var people = new GroupMemberService( rockContext )
                             .Queryable().AsNoTracking()
-                            .Where( m => 
+                            .Where( m =>
                                 groupIds.Contains( m.GroupId ) &&
                                 m.GroupMemberStatus == GroupMemberStatus.Active )
                             .Select( m => m.Person )
@@ -1020,7 +1020,7 @@ namespace RockWeb.Blocks.Connection
                         {
                             var defaultConnector = new DefaultConnector();
 
-                            var campus = CampusCache.Read( campusId );
+                            var campus = CampusCache.Get( campusId );
                             defaultConnector.CampusId = campus.Id;
                             defaultConnector.CampusName = campus.Name;
                             defaultConnector.PersonAliasId = DefaultConnectors.ContainsKey( campusId ) ? DefaultConnectors[campusId] : (int?)null;
@@ -1251,7 +1251,7 @@ namespace RockWeb.Blocks.Connection
 
                 case ConnectionWorkflowTriggerType.StatusChanged:
                     {
-                        var statusList = new ConnectionStatusService( rockContext ).Queryable().Where( s => s.ConnectionTypeId == connectionTypeId || s.ConnectionTypeId == null ).ToList();
+                        var statusList = new ConnectionStatusService( rockContext ).Queryable().Where( s => s.ConnectionTypeId == connectionTypeId || s.ConnectionTypeId == null ).OrderBy( a => a.Name ).ToList();
                         ddlPrimaryQualifier.Label = "From";
                         ddlPrimaryQualifier.Visible = true;
                         ddlPrimaryQualifier.Items.Clear();
@@ -1276,6 +1276,7 @@ namespace RockWeb.Blocks.Connection
                         var activityList = new ConnectionActivityTypeService( rockContext )
                             .Queryable().AsNoTracking()
                             .Where( a => a.ConnectionTypeId == connectionTypeId )
+                            .OrderBy( a => a.Name )
                             .ToList();
                         ddlPrimaryQualifier.Label = "Activity Type";
                         ddlPrimaryQualifier.Visible = true;
@@ -1486,7 +1487,7 @@ namespace RockWeb.Blocks.Connection
 
             DefaultConnectors = new Dictionary<int, int>();
             foreach( var campus in connectionOpportunity.ConnectionOpportunityCampuses
-                .Where( c => 
+                .Where( c =>
                     c.DefaultConnectorPersonAlias != null &&
                     c.DefaultConnectorPersonAlias.Person != null ) )
             {

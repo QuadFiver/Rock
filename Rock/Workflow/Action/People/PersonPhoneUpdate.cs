@@ -66,7 +66,7 @@ namespace Rock.Workflow.Action
             Guid? guidPersonAttribute = personAttributeValue.AsGuidOrNull();
             if ( guidPersonAttribute.HasValue )
             {
-                var attributePerson = AttributeCache.Read( guidPersonAttribute.Value, rockContext );
+                var attributePerson = AttributeCache.Get( guidPersonAttribute.Value, rockContext );
                 if ( attributePerson != null && attributePerson.FieldType.Class == "Rock.Field.Types.PersonFieldType" )
                 {
                     string attributePersonValue = action.GetWorklowAttributeValue( guidPersonAttribute.Value );
@@ -100,11 +100,11 @@ namespace Rock.Workflow.Action
             var phoneTypeAttributeValue = action.GetWorklowAttributeValue( GetAttributeValue( action, "PhoneTypeAttribute" ).AsGuid() );
             if ( phoneTypeAttributeValue != null )
             {
-                phoneType = DefinedValueCache.Read( phoneTypeAttributeValue.AsGuid() );
+                phoneType = DefinedValueCache.Get( phoneTypeAttributeValue.AsGuid() );
             }
             if ( phoneType == null )
             {
-                phoneType = DefinedValueCache.Read( GetAttributeValue( action, "PhoneType" ).AsGuid() );
+                phoneType = DefinedValueCache.Get( GetAttributeValue( action, "PhoneType" ).AsGuid() );
             }
             if ( phoneType == null )
             {
@@ -193,7 +193,8 @@ namespace Rock.Workflow.Action
             {
                 if ( oldValue != phoneNumber.NumberFormattedWithCountryCode )
                 {
-                    var changes = new List<string> { string.Format( "<em>(Phone was updated by the '{0}' workflow)</em>", action.ActionTypeCache.ActivityType.WorkflowType.Name ) };
+                    var changes = new History.HistoryChangeList();
+                    changes.AddChange( History.HistoryVerb.Modify, History.HistoryChangeType.Record, "Phone" ).SetSourceOfChange( $"{action.ActionTypeCache.ActivityType.WorkflowType.Name} workflow" );
                     HistoryService.SaveChanges( rockContext, typeof( Person ), Rock.SystemGuid.Category.HISTORY_PERSON_DEMOGRAPHIC_CHANGES.AsGuid(), personId.Value, changes, false );
                 }
 

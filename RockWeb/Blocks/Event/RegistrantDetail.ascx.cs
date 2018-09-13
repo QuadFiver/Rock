@@ -185,7 +185,7 @@ namespace RockWeb.Blocks.Event
                                 .ToList();
 
                 bool newRegistrant = false;
-                var registrantChanges = new List<string>();
+                var registrantChanges = new History.HistoryChangeList();
 
                 if ( registrant == null )
                 {
@@ -193,7 +193,7 @@ namespace RockWeb.Blocks.Event
                     registrant = new RegistrationRegistrant();
                     registrant.RegistrationId = RegistrantState.RegistrationId;
                     registrantService.Add( registrant );
-                    registrantChanges.Add( "Created Registrant" );
+                    registrantChanges.AddChange( History.HistoryVerb.Add, History.HistoryChangeType.Record, "Registrant" );
                 }
 
                 if ( !registrant.PersonAliasId.Equals( ppPerson.PersonAliasId ) )
@@ -243,9 +243,10 @@ namespace RockWeb.Blocks.Event
                                 f.Option == dbFee.Option &&
                                 f.Quantity > 0 ) )
                     {
-                        registrantChanges.Add( string.Format(
-                            "Removed '{0}' Fee (Quantity:{1:N0}, Cost:{2:C2}, Option:{3}", dbFee.RegistrationTemplateFee.Name, dbFee.Quantity, dbFee.Cost, dbFee.Option ) );
+                        var feeOldValue = string.Format( "'{0}' Fee (Quantity:{1:N0}, Cost:{2:C2}, Option:{3}",
+                          dbFee.RegistrationTemplateFee.Name, dbFee.Quantity, dbFee.Cost, dbFee.Option );
 
+                        registrantChanges.AddChange( History.HistoryVerb.Delete, History.HistoryChangeType.Record, "Fee").SetOldValue( feeOldValue );
                         registrant.Fees.Remove( dbFee );
                         registrantFeeService.Delete( dbFee );
                     }
@@ -284,7 +285,7 @@ namespace RockWeb.Blocks.Event
 
                         if ( dbFee.Id <= 0 )
                         {
-                            registrantChanges.Add( feeName + " Fee Added" );
+                            registrantChanges.AddChange( History.HistoryVerb.Add, History.HistoryChangeType.Record, "Fee").SetNewValue( feeName );
                         }
 
                         History.EvaluateChange( registrantChanges, feeName + " Quantity", dbFee.Quantity, uiFeeOption.Quantity );
@@ -372,7 +373,7 @@ namespace RockWeb.Blocks.Event
                                 t.FieldSource == RegistrationFieldSource.RegistrationAttribute &&
                                 t.AttributeId.HasValue ) ) )
                     {
-                        var attribute = AttributeCache.Read( field.AttributeId.Value );
+                        var attribute = AttributeCache.Get( field.AttributeId.Value );
                         if ( attribute != null )
                         {
                             string originalValue = registrant.GetAttributeValue( attribute.Key );
@@ -435,28 +436,31 @@ namespace RockWeb.Blocks.Event
                                 if ( groupMember == null )
                                 {
                                     groupMember = new GroupMember();
-                                    groupMemberService.Add( groupMember );
                                     groupMember.GroupId = reloadedRegistrant.Registration.Group.Id;
                                     groupMember.PersonId = ppPerson.PersonId.Value;
                                     groupMember.GroupRoleId = groupRoleId.Value;
                                     groupMember.GroupMemberStatus = TemplateState.GroupMemberStatus;
+                                    groupMemberService.Add( groupMember );
 
                                     newRockContext.SaveChanges();
 
-                                    registrantChanges.Add( string.Format( "Registrant added to {0} group", reloadedRegistrant.Registration.Group.Name ) );
+                                    registrantChanges.AddChange( History.HistoryVerb.Add, History.HistoryChangeType.Record, string.Format( "Registrant to {0} group", reloadedRegistrant.Registration.Group.Name ) );
                                 }
                                 else
                                 {
-                                    registrantChanges.Add( string.Format( "Registrant group member reference updated to existing person in {0} group", reloadedRegistrant.Registration.Group.Name ) );
+                                    registrantChanges.AddChange( History.HistoryVerb.Modify, History.HistoryChangeType.Record, string.Format( "Registrant to existing person in {0} group", reloadedRegistrant.Registration.Group.Name ) );
                                 }
 
                                 // Record this to the Person's and Registrants Notes and History...
-                                reloadedRegistrant.Registration.SavePersonNotesAndHistory( reloadedRegistrant.Registration.PersonAlias.Person, this.CurrentPersonAliasId, previousRegistrantPersonIds );
 
                                 reloadedRegistrant.GroupMemberId = groupMember.Id;
-                                newRockContext.SaveChanges();
                             }
                         }
+                        if (reloadedRegistrant.Registration.FirstName.IsNotNullOrWhiteSpace() && reloadedRegistrant.Registration.LastName.IsNotNullOrWhiteSpace())
+                        {
+                            reloadedRegistrant.Registration.SavePersonNotesAndHistory( reloadedRegistrant.Registration.FirstName, reloadedRegistrant.Registration.LastName, this.CurrentPersonAliasId, previousRegistrantPersonIds );
+                        }
+                        newRockContext.SaveChanges();
                     }
                 }
 
@@ -492,7 +496,7 @@ namespace RockWeb.Blocks.Event
         protected void lbWizardTemplate_Click( object sender, EventArgs e )
         {
             var qryParams = new Dictionary<string, string>();
-            var pageCache = PageCache.Read( RockPage.PageId );
+            var pageCache = PageCache.Get( RockPage.PageId );
             if ( pageCache != null && 
                 pageCache.ParentPage != null && 
                 pageCache.ParentPage.ParentPage != null &&
@@ -511,7 +515,7 @@ namespace RockWeb.Blocks.Event
         protected void lbWizardInstance_Click( object sender, EventArgs e )
         {
             var qryParams = new Dictionary<string, string>();
-            var pageCache = PageCache.Read( RockPage.PageId );
+            var pageCache = PageCache.Get( RockPage.PageId );
             if ( pageCache != null &&
                 pageCache.ParentPage != null &&
                 pageCache.ParentPage.ParentPage != null )
@@ -734,7 +738,7 @@ namespace RockWeb.Blocks.Event
 
                                 if ( field.AttributeId.HasValue )
                                 {
-                                    var attribute = AttributeCache.Read( field.AttributeId.Value );
+                                    var attribute = AttributeCache.Get( field.AttributeId.Value );
                                     string value = string.Empty;
                                     if ( setValues && fieldValue != null )
                                     {
@@ -1005,7 +1009,7 @@ namespace RockWeb.Blocks.Event
 
                                 if ( field.AttributeId.HasValue )
                                 {
-                                    var attribute = AttributeCache.Read( field.AttributeId.Value );
+                                    var attribute = AttributeCache.Get( field.AttributeId.Value );
                                     string fieldId = "attribute_field_" + attribute.Id.ToString();
 
                                     Control control = phFields.FindControl( fieldId );

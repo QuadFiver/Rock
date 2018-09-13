@@ -87,7 +87,7 @@ namespace RockWeb.Blocks.Administration
         {
             int? pageId = PageParameter( "Page" ).AsIntegerOrNull();
 
-            btnSecurity.EntityTypeId = EntityTypeCache.Read( typeof( Rock.Model.Page ) ).Id;
+            btnSecurity.EntityTypeId = EntityTypeCache.Get( typeof( Rock.Model.Page ) ).Id;
 
             // only show if there was a Page parameter specified
             this.Visible = pageId.HasValue;
@@ -97,7 +97,7 @@ namespace RockWeb.Blocks.Administration
                 // hide the current page in the page picker to prevent setting this page's parent page to itself (or one of it's child pages)
                 ppParentPage.HiddenPageIds = new int[] { pageId.Value };
 
-                var pageCache = Rock.Web.Cache.PageCache.Read( pageId.Value );
+                var pageCache = PageCache.Get( pageId.Value );
 
                 DialogPage dialogPage = this.Page as DialogPage;
                 if ( dialogPage != null )
@@ -219,7 +219,7 @@ namespace RockWeb.Blocks.Administration
                 lIcon.Text = "<i class='fa fa-file-text-o'></i>";
             }
 
-            var site = SiteCache.Read( page.Layout.SiteId );
+            var site = SiteCache.Get( page.Layout.SiteId );
             hlblSiteName.Text = "Site: " + site.Name;
 
             lblMainDetailsCol1.Text = new DescriptionList()
@@ -444,14 +444,14 @@ namespace RockWeb.Blocks.Administration
             }
             else if ( page.ParentPageId.HasValue )
             {
-                var parentPageCache = PageCache.Read( page.ParentPageId.Value );
+                var parentPageCache = PageCache.Get( page.ParentPageId.Value );
                 if ( parentPageCache != null && parentPageCache.Layout != null )
                 {
                     ddlSite.SetValue( parentPageCache.Layout.SiteId );
                 }
             }
 
-            LoadLayouts( rockContext, SiteCache.Read( ddlSite.SelectedValue.AsInteger() ) );
+            LoadLayouts( rockContext, SiteCache.Get( ddlSite.SelectedValue.AsInteger() ) );
             if ( page.LayoutId == 0 )
             {
                 // default a new page's layout to whatever the parent page's layout is
@@ -519,7 +519,7 @@ namespace RockWeb.Blocks.Administration
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void ddlSite_SelectedIndexChanged( object sender, EventArgs e )
         {
-            LoadLayouts( new RockContext(), SiteCache.Read( ddlSite.SelectedValueAsInt().Value ) );
+            LoadLayouts( new RockContext(), SiteCache.Get( ddlSite.SelectedValueAsInt().Value ) );
         }
 
         /// <summary>
@@ -646,18 +646,6 @@ namespace RockWeb.Blocks.Administration
                 }
 
                 int parentPageId = ppParentPage.SelectedValueAsInt() ?? 0;
-                if ( page.ParentPageId != parentPageId )
-                {
-                    if ( page.ParentPageId.HasValue )
-                    {
-                        PageCache.Flush( page.ParentPageId.Value );
-                    }
-
-                    if ( parentPageId != 0 )
-                    {
-                        PageCache.Flush( parentPageId );
-                    }
-                }
 
                 page.InternalName = tbPageName.Text;
                 page.PageTitle = tbPageTitle.Text;
@@ -810,8 +798,6 @@ namespace RockWeb.Blocks.Administration
                         }
                     }
 
-                    Rock.Web.Cache.PageCache.Flush( page.Id );
-
                     string script = "if (typeof window.parent.Rock.controls.modal.close === 'function') window.parent.Rock.controls.modal.close('PAGE_UPDATED');";
                     ScriptManager.RegisterStartupScript( this.Page, this.GetType(), "close-modal", script, true );
 
@@ -856,7 +842,7 @@ namespace RockWeb.Blocks.Administration
         protected void lbImport_Click( object sender, EventArgs e )
         {
             int? pageId = hfPageId.Value.AsIntegerOrNull();
-            var page = PageCache.Read( pageId ?? 0 );
+            var page = PageCache.Get( pageId ?? 0 );
             if ( page != null )
             {
                 var extension = fuImport.FileName.Substring( fuImport.FileName.LastIndexOf( '.' ) );
@@ -938,7 +924,7 @@ namespace RockWeb.Blocks.Administration
         private void LoadSites( RockContext rockContext )
         {
             ddlSite.Items.Clear();
-            foreach ( SiteCache site in new SiteService( rockContext ).Queryable().OrderBy( s => s.Name ).Select( a => a.Id ).ToList().Select( a => SiteCache.Read( a ) ) )
+            foreach ( SiteCache site in new SiteService( rockContext ).Queryable().OrderBy( s => s.Name ).Select( a => a.Id ).ToList().Select( a => SiteCache.Get( a ) ) )
             {
                 ddlSite.Items.Add( new ListItem( site.Name, site.Id.ToString() ) );
             }
@@ -1074,8 +1060,6 @@ namespace RockWeb.Blocks.Administration
 
                 rockContext.SaveChanges();
 
-                Rock.Web.Cache.PageCache.Flush( page.Id );
-
                 // reload page, selecting the deleted page's parent
                 var qryParams = new Dictionary<string, string>();
                 if ( parentPageId.HasValue )
@@ -1207,7 +1191,7 @@ namespace RockWeb.Blocks.Administration
             Guid? copiedPageGuid = pageService.CopyPage( sourcePageId, cbCopyPageIncludeChildPages.Checked, this.CurrentPersonAliasId );
             if ( copiedPageGuid.HasValue )
             {
-                var copiedPage = PageCache.Read( copiedPageGuid.Value );
+                var copiedPage = PageCache.Get( copiedPageGuid.Value );
 
                 // reload page (Assuming we are using Page Builder UI) to the new copied page
                 var qryParams = new Dictionary<string, string>();

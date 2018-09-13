@@ -148,10 +148,10 @@ namespace Rock.Jobs
                         // get list of leaders
                         var groupLeaders = group.Members.Where( m => m.GroupRole.IsLeader == true );
 
-                        var appRoot = Rock.Web.Cache.GlobalAttributesCache.Read( rockContext ).GetValue( "PublicApplicationRoot" );
+                        var appRoot = GlobalAttributesCache.Get().GetValue( "PublicApplicationRoot", rockContext );
 
                         var recipients = new List<RecipientData>();
-                        foreach ( var leader in groupLeaders.Where( l => l.Person != null && l.Person.Email != "" ) )
+                        foreach ( var leader in groupLeaders.Where( l => l.Person != null && l.Person.Email != "" && l.Person.IsEmailActive && l.Person.EmailPreference != EmailPreference.DoNotEmail ) )
                         {
                             // create merge object
                             var mergeFields = new Dictionary<string, object>();

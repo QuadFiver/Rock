@@ -60,11 +60,11 @@ namespace Rock.Workflow.Action
 
             if ( workflowTypeGuid.HasValue )
             {
-                workflowType = WorkflowTypeCache.Read( workflowTypeGuid.Value );
+                workflowType = WorkflowTypeCache.Get( workflowTypeGuid.Value );
             }
             else if ( workflowTypeFromAttributeGuid.HasValue )
             {
-                workflowType = WorkflowTypeCache.Read( workflowTypeFromAttributeGuid.Value );
+                workflowType = WorkflowTypeCache.Get( workflowTypeFromAttributeGuid.Value );
             }
 
             if ( workflowType == null )

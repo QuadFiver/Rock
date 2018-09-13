@@ -17,6 +17,7 @@
 namespace Rock.Migrations
 {
     using System;
+    using System.Collections.Generic;
     using System.Data.Entity;
     using System.Data.Entity.Migrations;
     using System.Linq;
@@ -31,7 +32,7 @@ namespace Rock.Migrations
             CommandTimeout = 300;
         }
 
-        protected override void Seed(Rock.Data.RockContext context)
+        protected override void Seed( Rock.Data.RockContext context )
         {
             // In V7, the Communication and CommunicationTemplate models were updated to move data stored as JSON in a varchar(max) 
             // column (MediumDataJson) to specific columns. This method will update all of the communication templates, and the most 

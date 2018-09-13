@@ -93,7 +93,7 @@ namespace Rock.Workflow.Action
             Guid guidPersonAttribute = value.AsGuid();
             if ( !guidPersonAttribute.IsEmpty() )
             {
-                var attributePerson = AttributeCache.Read( guidPersonAttribute, rockContext );
+                var attributePerson = AttributeCache.Get( guidPersonAttribute, rockContext );
                 if ( attributePerson != null )
                 {
                     string attributePersonValue = action.GetWorklowAttributeValue( guidPersonAttribute );

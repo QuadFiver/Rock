@@ -85,7 +85,7 @@ namespace Rock.Reporting
         /// <param name="returnUrl">The return URL.</param>
         public static void AuthenticateAccount( Guid accountValueGuid, string returnUrl )
         {
-            var biAccountValue = DefinedValueCache.Read( accountValueGuid );
+            var biAccountValue = DefinedValueCache.Get( accountValueGuid );
 
             AuthenticateAccount( biAccountValue, returnUrl );
         }
@@ -234,7 +234,7 @@ namespace Rock.Reporting
         /// <returns></returns>
         public static string GetAccessToken( Guid accountValueGuid, out string message )
         {
-            var biAccountValue = DefinedValueCache.Read( accountValueGuid );
+            var biAccountValue = DefinedValueCache.Get( accountValueGuid );
 
             return GetAccessToken( biAccountValue, out message );
         }
@@ -321,7 +321,7 @@ namespace Rock.Reporting
                 {
                     // configure reports request
                     System.Net.WebRequest request;
-                    if ( groupId.IsNotNullOrWhitespace() )
+                    if ( groupId.IsNotNullOrWhiteSpace() )
                     {
                         request = System.Net.WebRequest.Create( $"{_baseUri}groups/{groupId}/reports" ) as System.Net.HttpWebRequest;
                     }

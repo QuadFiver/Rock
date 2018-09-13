@@ -98,7 +98,7 @@ namespace RockWeb.Blocks.Cms
 
             using ( var rockContext = new RockContext() )
             {
-                var dv = DefinedValueCache.Read( Rock.SystemGuid.DefinedValue.INTERACTIONCHANNELTYPE_URLSHORTENER );
+                var dv = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.INTERACTIONCHANNELTYPE_URLSHORTENER );
                 if ( dv != null )
                 {
                     var qry = new InteractionService( rockContext )

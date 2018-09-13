@@ -139,8 +139,8 @@ namespace RockWeb.Blocks.Crm
         {
             RockContext rockContext = new RockContext();
             var personDuplicateService = new PersonDuplicateService( rockContext );
-            int recordStatusInactiveId = DefinedValueCache.Read( Rock.SystemGuid.DefinedValue.PERSON_RECORD_STATUS_INACTIVE.AsGuid() ).Id;
-            int recordTypeBusinessId = DefinedValueCache.Read( Rock.SystemGuid.DefinedValue.PERSON_RECORD_TYPE_BUSINESS.AsGuid() ).Id;
+            int recordStatusInactiveId = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_STATUS_INACTIVE.AsGuid() ).Id;
+            int recordTypeBusinessId = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_TYPE_BUSINESS.AsGuid() ).Id;
 
             // list duplicates that:
             // - aren't confirmed as NotDuplicate and aren't IgnoreUntilScoreChanges,

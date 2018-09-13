@@ -163,13 +163,13 @@ namespace RockWeb.Blocks.Crm
                 {
                     if ( item.PersonalDevice.PersonalDeviceTypeValueId.HasValue )
                     {
-                        var value = DefinedValueCache.Read( item.PersonalDevice.PersonalDeviceTypeValueId.Value );
+                        var value = DefinedValueCache.Get( item.PersonalDevice.PersonalDeviceTypeValueId.Value );
                         item.DeviceIconCssClass = value.GetAttributeValue( "IconCssClass" );
                     }
 
                     if ( item.PersonalDevice.PlatformValueId.HasValue )
                     {
-                        item.PlatformValue = DefinedValueCache.Read( item.PersonalDevice.PlatformValueId.Value ).Value;
+                        item.PlatformValue = DefinedValueCache.Get( item.PersonalDevice.PlatformValueId.Value ).Value;
 
                     }
                 }

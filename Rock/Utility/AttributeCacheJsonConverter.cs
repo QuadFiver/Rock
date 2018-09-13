@@ -80,7 +80,7 @@ namespace Rock.Utility
 
             if ( deserializeInSimpleMode && attributeCache != null && attributeCache.Id > 0 )
             {
-                return AttributeCache.Read( attributeCache.Id );
+                return AttributeCache.Get( attributeCache.Id );
             }
 
             return attributeCache;

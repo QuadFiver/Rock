@@ -244,7 +244,7 @@ namespace RockWeb.Blocks.Event
         {
             if ( PageNumber.Value > targetPage )
             {
-                var pageCache = PageCache.Read( RockPage.PageId );
+                var pageCache = PageCache.Get( RockPage.PageId );
                 if ( pageCache != null )
                 {
                     if ( 

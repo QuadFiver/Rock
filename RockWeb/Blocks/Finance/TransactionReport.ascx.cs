@@ -241,7 +241,7 @@ namespace RockWeb.Blocks.Finance
             }
 
             // Transaction Types
-            var transactionTypeValueIdList = GetAttributeValue( "TransactionTypes" ).SplitDelimitedValues().AsGuidList().Select( a => DefinedValueCache.Read( a ) ).Where( a => a != null ).Select( a => a.Id ).ToList();
+            var transactionTypeValueIdList = GetAttributeValue( "TransactionTypes" ).SplitDelimitedValues().AsGuidList().Select( a => DefinedValueCache.Get( a ) ).Where( a => a != null ).Select( a => a.Id ).ToList();
 
             if ( transactionTypeValueIdList.Any() )
             {
@@ -284,7 +284,7 @@ namespace RockWeb.Blocks.Finance
                 pnlSummary.Visible = false;
             }
 
-            gTransactions.EntityTypeId = EntityTypeCache.Read<FinancialTransaction>().Id;
+            gTransactions.EntityTypeId = EntityTypeCache.Get<FinancialTransaction>().Id;
             gTransactions.DataSource = txns.Select( t => new
             {
                 t.Id,
@@ -319,13 +319,13 @@ namespace RockWeb.Blocks.Finance
             {
                 int currencyTypeId = txn.FinancialPaymentDetail.CurrencyTypeValueId.Value;
 
-                var currencyTypeValue = DefinedValueCache.Read( currencyTypeId );
+                var currencyTypeValue = DefinedValueCache.Get( currencyTypeId );
                 currencyType = currencyTypeValue != null ? currencyTypeValue.Value : string.Empty;
 
                 if ( txn.FinancialPaymentDetail.CreditCardTypeValueId.HasValue )
                 {
                     int creditCardTypeId = txn.FinancialPaymentDetail.CreditCardTypeValueId.Value;
-                    var creditCardTypeValue = DefinedValueCache.Read( creditCardTypeId );
+                    var creditCardTypeValue = DefinedValueCache.Get( creditCardTypeId );
                     creditCardType = creditCardTypeValue != null ? creditCardTypeValue.Value : string.Empty;
 
                     return string.Format( "{0} - {1}", currencyType, creditCardType );

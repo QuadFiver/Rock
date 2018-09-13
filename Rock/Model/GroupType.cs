@@ -24,10 +24,10 @@ using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
 using Rock.Data;
-using Rock.Security;
+using Rock.Web.Cache;
 using Rock.UniversalSearch;
 using Rock.UniversalSearch.IndexModels;
-using Rock.Web.Cache;
+using Rock.Security;
 
 namespace Rock.Model
 {
@@ -39,7 +39,7 @@ namespace Rock.Model
     [RockDomain( "Group" )]
     [Table( "GroupType" )]
     [DataContract]
-    public partial class GroupType : Model<GroupType>, IOrdered
+    public partial class GroupType : Model<GroupType>, IOrdered, ICacheable
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="GroupType"/> class.
@@ -401,7 +401,9 @@ namespace Rock.Model
 	
 	
 	
-<p class='description'>{{ Group.Description }}</p>
+{% if Group.Description != '' -%}
+    <p class='description'>{{ Group.Description }}</p>
+{% endif -%}
 
 <div class=""row"">
    <div class=""col-md-6"">
@@ -580,6 +582,34 @@ namespace Rock.Model
         [DataMember]
         public bool AllowSpecificGroupMemberWorkflows { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether group history should be enabled for groups of this type
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [enable group history]; otherwise, <c>false</c>.
+        /// </value>
+        [DataMember]
+        public bool EnableGroupHistory { get; set; } = false;
+
+        /// <summary>
+        /// The color used to visually distinguish groups on lists.
+        /// </summary>
+        /// <value>
+        /// The group type color.
+        /// </value>
+        [DataMember]
+        [MaxLength( 100 )]
+        public string GroupTypeColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the DefinedType that Groups of this type will use for the Group.StatusValue
+        /// </summary>
+        /// <value>
+        /// The group status defined type identifier.
+        /// </value>
+        [DataMember]
+        public int? GroupStatusDefinedTypeId { get; set; }
+
         #endregion
 
         #region Virtual Properties
@@ -754,6 +784,14 @@ namespace Rock.Model
         private ICollection<GroupRequirement> _groupsRequirements;
 
         /// <summary>
+        /// Gets or sets the DefinedType that Groups of this type will use for the Group.StatusValue
+        /// </summary>
+        /// <value>
+        /// The type of the group status defined.
+        /// </value>
+        public DefinedType GroupStatusDefinedType { get; set; }
+
+        /// <summary>
         /// A dictionary of actions that this class supports and the description of each.
         /// </summary>
         public override Dictionary<string, string> SupportedActions {
@@ -920,8 +958,8 @@ namespace Rock.Model
         {
             var groupTypeIds = GetInheritedGroupTypeIds( rockContext );
 
-            var inheritedAttributes = new Dictionary<int, List<Rock.Web.Cache.AttributeCache>>();
-            groupTypeIds.ForEach( g => inheritedAttributes.Add( g, new List<Rock.Web.Cache.AttributeCache>() ) );
+            var inheritedAttributes = new Dictionary<int, List<AttributeCache>>();
+            groupTypeIds.ForEach( g => inheritedAttributes.Add( g, new List<AttributeCache>() ) );
 
             //
             // Walk each group type and generate a list of matching attributes.
@@ -936,7 +974,7 @@ namespace Rock.Model
                     {
                         foreach ( int attributeId in entityAttributes.AttributeIds )
                         {
-                            inheritedAttributes[groupTypeIdValue].Add( Rock.Web.Cache.AttributeCache.Read( attributeId ) );
+                            inheritedAttributes[groupTypeIdValue].Add( AttributeCache.Get( attributeId ) );
                         }
                     }
                 }
@@ -946,7 +984,7 @@ namespace Rock.Model
             // Walk the generated list of attribute groups and put them, ordered, into a list
             // of inherited attributes.
             //
-            var attributes = new List<Rock.Web.Cache.AttributeCache>();
+            var attributes = new List<AttributeCache>();
             foreach ( var attributeGroup in inheritedAttributes )
             {
                 foreach ( var attribute in attributeGroup.Value.OrderBy( a => a.Order ) )
@@ -1021,6 +1059,38 @@ namespace Rock.Model
             IndexContainer.IndexDocuments( indexableGroups );
         }
         #endregion
+
+        #region ICacheable
+
+        /// <summary>
+        /// Gets the cache object associated with this Entity
+        /// </summary>
+        /// <returns></returns>
+        public IEntityCache GetCacheObject()
+        {
+            return GroupTypeCache.Get( this.Id );
+        }
+
+        /// <summary>
+        /// Updates any Cache Objects that are associated with this entity
+        /// </summary>
+        /// <param name="entityState">State of the entity.</param>
+        /// <param name="dbContext">The database context.</param>
+        public void UpdateCache( System.Data.Entity.EntityState entityState, Rock.Data.DbContext dbContext )
+        {
+            var parentGroupTypes = GroupTypeCache.Get( this.Id, dbContext as RockContext )?.ParentGroupTypes;
+            if ( parentGroupTypes?.Any() == true )
+            {
+                foreach ( var parentGroupType in parentGroupTypes )
+                {
+                    GroupTypeCache.UpdateCachedEntity( parentGroupType.Id, EntityState.Detached );
+                }
+            }
+
+            GroupTypeCache.UpdateCachedEntity( this.Id, entityState );
+        }
+
+        #endregion
     }
 
     #region Entity Configuration
@@ -1037,6 +1107,7 @@ namespace Rock.Model
         {
             this.HasMany( p => p.ChildGroupTypes ).WithMany( c => c.ParentGroupTypes ).Map( m => { m.MapLeftKey( "GroupTypeId" ); m.MapRightKey( "ChildGroupTypeId" ); m.ToTable( "GroupTypeAssociation" ); } );
             this.HasOptional( p => p.DefaultGroupRole ).WithMany().HasForeignKey( p => p.DefaultGroupRoleId ).WillCascadeOnDelete( false );
+            this.HasOptional( p => p.GroupStatusDefinedType ).WithMany().HasForeignKey( p => p.GroupStatusDefinedTypeId ).WillCascadeOnDelete( false );
             this.HasOptional( p => p.InheritedGroupType ).WithMany().HasForeignKey( p => p.InheritedGroupTypeId ).WillCascadeOnDelete( false );
         }
     }

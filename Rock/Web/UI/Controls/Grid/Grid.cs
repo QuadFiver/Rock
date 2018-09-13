@@ -28,6 +28,7 @@ using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
 using OfficeOpenXml;
 using Rock;
+using Rock.Attribute;
 using Rock.Data;
 using Rock.Utility;
 using Rock.Web.Cache;
@@ -334,6 +335,9 @@ namespace Rock.Web.UI.Controls
                     this.AllowSorting = false;
                     this.Actions.ShowExcelExport = false;
                     this.Actions.ShowMergeTemplate = false;
+
+                    // disable showing buttons in the header of light grids
+                    this.ShowActionsInHeader = false;
                 }
             }
         }
@@ -742,13 +746,7 @@ namespace Rock.Web.UI.Controls
                     }
                 }
             }
-
-            // disable showing buttons in the header of light grids
-            if ( DisplayType == GridDisplayType.Light )
-            {
-                ShowActionsInHeader = false;
-            }
-
+            
             base.OnLoad( e );
         }
 
@@ -759,24 +757,22 @@ namespace Rock.Web.UI.Controls
         {
             if ( this.ShowConfirmDeleteDialog && this.Enabled && this.IsDeleteEnabled )
             {
-                string deleteButtonScriptFormat = @"
-   $('#{0} .grid-delete-button').not('.disabled').on( 'click', function (event) {{
-  return Rock.dialogs.confirmDelete(event, '{1}');
+                string deleteButtonScript = $@"
+$('#{this.ClientID} .grid-delete-button').not('.disabled').on( 'click', function (event) {{
+    return Rock.dialogs.confirmDelete(event, '{this.RowItemText}');
 }});";
-                string deleteButtonScript = string.Format( deleteButtonScriptFormat, this.ClientID, this.RowItemText );
                 ScriptManager.RegisterStartupScript( this, this.GetType(), "grid-delete-confirm-script-" + this.ClientID, deleteButtonScript, true );
             }
 
-            string clickScript = string.Format( "__doPostBack('{0}', 'RowSelected$' + dataRowIndexValue);", this.UniqueID );
-
-            string gridSelectCellScriptFormat = @"
-   $('#{0} .grid-select-cell').on( 'click', function (event) {{
-  if (!($(event.target).is('a') || $(event.target).parent().is('a'))) {{
-    var dataRowIndexValue = $(this).closest('tr').attr('data-row-index');
-    {1}
-  }}
+            string gridSelectCellScript = $@"
+$('#{this.ClientID} .grid-select-cell').on( 'click', function (event) {{
+    if (!($(event.target).is('a') || $(event.target).parent().is('a'))) {{
+        var dataRowIndexValue = $(this).closest('tr').attr('data-row-index');
+        var postbackArg = 'RowSelected$' + dataRowIndexValue;
+        window.location = ""javascript:__doPostBack('{this.UniqueID}', '"" +  postbackArg + ""')"";
+    }}
 }});";
-            string gridSelectCellScript = string.Format( gridSelectCellScriptFormat, this.ClientID, clickScript );
+
             ScriptManager.RegisterStartupScript( this, this.GetType(), "grid-select-cell-script-" + this.ClientID, gridSelectCellScript, true );
 
             // render script for popovers
@@ -1062,7 +1058,8 @@ namespace Rock.Web.UI.Controls
                 _table.Rows.Add( _actionFooterRow );
 
                 TableCell actionFooterCell = new TableCell();
-                actionFooterCell.ColumnSpan = this.Columns.Count + (this.CustomColumns?.Count ?? 0);
+                int visibleColumnCount = this.Columns.OfType<DataControlField>().Where( a => a.Visible ).Count() + ( this.CustomColumns?.Count ?? 0);
+                actionFooterCell.ColumnSpan = visibleColumnCount;
                 actionFooterCell.CssClass = "grid-actions";
                 _actionFooterRow.Cells.Add( actionFooterCell );
 
@@ -1080,7 +1077,7 @@ namespace Rock.Web.UI.Controls
                 _table.Rows.AddAt( 0, _actionHeaderRow );
 
                 TableCell actionHeaderCell = new TableCell();
-                actionHeaderCell.ColumnSpan = this.Columns.Count + ( this.CustomColumns?.Count ?? 0 );
+                actionHeaderCell.ColumnSpan = visibleColumnCount;
                 actionHeaderCell.CssClass = "grid-actions";
                 _actionHeaderRow.Cells.Add( actionHeaderCell );
 
@@ -1391,10 +1388,10 @@ namespace Rock.Web.UI.Controls
 
             if ( e.CommandName == "RowSelected" )
             {
-                int rowIndex = int.MinValue;
-                if ( int.TryParse( e.CommandArgument.ToString(), out rowIndex ) )
+                int? rowIndex = e.CommandArgument?.ToString().AsIntegerOrNull();
+                if ( rowIndex.HasValue )
                 {
-                    RowEventArgs a = new RowEventArgs( this.Rows[rowIndex] );
+                    RowEventArgs a = new RowEventArgs( this.Rows[rowIndex.Value] );
                     OnRowSelected( a );
                 }
             }
@@ -1688,13 +1685,13 @@ namespace Rock.Web.UI.Controls
             if ( !string.IsNullOrEmpty( this.ExportTitleName ) )
             {
                 // If we have a Export Title Name then use it
-                workSheetName = this.ExportTitleName;
+                workSheetName = this.ExportTitleName.ReplaceSpecialCharacters( "_" ).TrimEnd( '_' );
                 title = this.ExportTitleName;
             }
             else if ( !string.IsNullOrEmpty( this.Caption ) )
             {
                 // Then try the caption
-                workSheetName = this.Caption;
+                workSheetName = this.Caption.ReplaceSpecialCharacters( "_" ).TrimEnd( '_' );
                 title = this.Caption;
             }
             else
@@ -1704,7 +1701,7 @@ namespace Rock.Web.UI.Controls
 
                 if ( !string.IsNullOrEmpty( pageTitle ) )
                 {
-                    workSheetName = pageTitle;
+                    workSheetName = pageTitle.ReplaceSpecialCharacters( "_" ).TrimEnd( '_' );
                     title = pageTitle;
                 }
             }
@@ -1847,8 +1844,22 @@ namespace Rock.Web.UI.Controls
                 }
 
                 // print data
+                int gridRowCounter = 0;
+                var selectedKeys = SelectedKeys.ToList();
                 foreach ( DataRowView rowView in data.DefaultView )
                 {
+                    if ( selectedKeys.Any() && this.DataKeyNames.Count() == 1 )
+                    {
+                        var dataKeyValue = this.DataKeys[gridRowCounter].Value;
+                        gridRowCounter++;
+
+                        if ( !selectedKeys.Contains( dataKeyValue ) )
+                        {
+                            // if there are specific rows selected, skip over rows that aren't selected
+                            continue;
+                        }
+                    }
+
                     rowCounter++;
 
                     for ( int i = 0; i < data.Columns.Count; i++ )
@@ -1989,7 +2000,7 @@ namespace Rock.Web.UI.Controls
                         }
                     }
 
-                    Rock.Attribute.IHasAttributes dataItemWithAttributes = null;
+                    IHasAttributes dataItemWithAttributes = null;
                     if ( attributeFields.Any() )
                     {
                         // First check to see if there is an object list
@@ -1999,14 +2010,14 @@ namespace Rock.Web.UI.Controls
                             string key = DataKeys[dataIndex].Value.ToString();
                             if ( !string.IsNullOrWhiteSpace( key ) && ObjectList.ContainsKey( key ) )
                             {
-                                dataItemWithAttributes = ObjectList[key] as Rock.Attribute.IHasAttributes;
+                                dataItemWithAttributes = ObjectList[key] as IHasAttributes;
                             }
                         }
 
                         // Then check if DataItem has attributes
                         if ( dataItemWithAttributes == null )
                         {
-                            dataItemWithAttributes = item as Rock.Attribute.IHasAttributes;
+                            dataItemWithAttributes = item as IHasAttributes;
                         }
 
                         if ( dataItemWithAttributes != null )
@@ -2248,7 +2259,7 @@ namespace Rock.Web.UI.Controls
 
                         if ( definedValueId > 0 )
                         {
-                            var definedValue = DefinedValueCache.Read( definedValueId );
+                            var definedValue = DefinedValueCache.Get( definedValueId );
                             if ( definedValue != null )
                             {
                                 return definedValue.Value;
@@ -2273,7 +2284,7 @@ namespace Rock.Web.UI.Controls
 
                             if ( isGuid )
                             {
-                                var definedValue = DefinedValueCache.Read( definedValueGuid );
+                                var definedValue = DefinedValueCache.Get( definedValueGuid );
 
                                 if ( definedValue != null )
                                 {
@@ -2399,7 +2410,7 @@ namespace Rock.Web.UI.Controls
             var allColumns = new List<DataControlField>();
 
             // If displaying people, add select field (for merging & communication)
-            if ( CommunicationRecipientPersonIdFields.Any() || PersonIdField.IsNotNullOrWhitespace() )
+            if ( CommunicationRecipientPersonIdFields.Any() || PersonIdField.IsNotNullOrWhiteSpace() )
             {
                 var selectField = new SelectField();
                 displayColumns.Add( selectField );
@@ -2472,7 +2483,7 @@ namespace Rock.Web.UI.Controls
                 else
                 {
                     // If there were not any special columns for the communication, just use the column that was configured for the person id
-                    if ( this.PersonIdField.IsNotNullOrWhitespace() )
+                    if ( this.PersonIdField.IsNotNullOrWhiteSpace() )
                     {
                         personIdFields.Add( this.PersonIdField );
                     }
@@ -2480,7 +2491,7 @@ namespace Rock.Web.UI.Controls
             }
             else
             {
-                if ( this.PersonIdField.IsNotNullOrWhitespace() )
+                if ( this.PersonIdField.IsNotNullOrWhiteSpace() )
                 {
                     personIdFields.Add( this.PersonIdField );
                 }
@@ -2534,7 +2545,7 @@ namespace Rock.Web.UI.Controls
                                 if ( isForCommunication )
                                 {
                                     var mergeField = communicationMergeFields.Where( f => f.Key.Equals( data.Columns[i].ColumnName, StringComparison.OrdinalIgnoreCase ) ).Select( f => f.Value ).FirstOrDefault();
-                                    if ( mergeField.IsNotNullOrWhitespace() )
+                                    if ( mergeField.IsNotNullOrWhiteSpace() )
                                     {
                                         var boundField = this.ColumnsOfType<RockBoundField>().Where( c => c.DataField == mergeField ).FirstOrDefault();
                                         if ( boundField != null )
@@ -2769,7 +2780,7 @@ namespace Rock.Web.UI.Controls
             if ( keys.Any() )
             {
                 var entitySet = new Rock.Model.EntitySet();
-                entitySet.EntityTypeId = Rock.Web.Cache.EntityTypeCache.Read<Rock.Model.Person>().Id;
+                entitySet.EntityTypeId = EntityTypeCache.Get<Rock.Model.Person>().Id;
                 entitySet.ExpireDateTime = RockDateTime.Now.AddMinutes( 5 );
                 List<Rock.Model.EntitySetItem> entitySetItems = new List<Rock.Model.EntitySetItem>();
 
@@ -2901,10 +2912,24 @@ namespace Rock.Web.UI.Controls
             List<Rock.Model.EntitySetItem> entitySetItems = new List<Rock.Model.EntitySetItem>();
 
             int itemOrder = 0;
+            int gridRowCounter = 0;
+            var selectedKeys = SelectedKeys.ToList();
             foreach ( DataRowView row in this.DataSourceAsDataTable.DefaultView )
             {
                 try
                 {
+                    if ( selectedKeys.Any() && this.DataKeyNames.Count() == 1 )
+                    {
+                        var dataKeyValue = this.DataKeys[gridRowCounter].Value;
+                        gridRowCounter++;
+
+                        if ( !selectedKeys.Contains( dataKeyValue ) )
+                        {
+                            // if there are specific rows selected, skip over rows that aren't selected
+                            continue;
+                        }
+                    }
+
                     var item = new Rock.Model.EntitySetItem();
 
                     if ( entitySet.EntityTypeId.HasValue && dataKeyColumn != null )
@@ -2967,8 +2992,6 @@ namespace Rock.Web.UI.Controls
             }
 
             int? entityTypeId = null;
-            string dataKeyColumn = this.DataKeyNames.FirstOrDefault() ?? "Id";
-            PropertyInfo idProp = dataSourceObjectType.GetProperty( dataKeyColumn );
 
             if ( this.EntityTypeId.HasValue )
             {
@@ -2989,13 +3012,25 @@ namespace Rock.Web.UI.Controls
                         entityType = dataSourceObjectType;
                     }
 
-                    var entityTypeCache = Rock.Web.Cache.EntityTypeCache.Read( entityType, false );
+                    var entityTypeCache = EntityTypeCache.Get( entityType, false );
                     if ( entityTypeCache != null )
                     {
                         entityTypeId = entityTypeCache.Id;
                     }
                 }
             }
+
+            string entityIdColumn;
+            if ( entityTypeId.HasValue && entityTypeId.Value == EntityTypeCache.GetId<Model.Person>() )
+            {
+                entityIdColumn = this.PersonIdField ?? "Id";
+            }
+            else
+            {
+                entityIdColumn = this.DataKeyNames.FirstOrDefault() ?? "Id";
+            }
+
+            PropertyInfo idProp = dataSourceObjectType.GetProperty( entityIdColumn );
 
             // first try to get the SelectedKeys from the SelectField (if there is one)
             HashSet<int> selectedKeys = new HashSet<int>( this.SelectedKeys.Select( a => a as int? ).Where( a => a.HasValue ).Select( a => a.Value ).Distinct().ToList() );
@@ -3031,7 +3066,7 @@ namespace Rock.Web.UI.Controls
 
             if ( entityTypeId.HasValue )
             {
-                var dataSourceObjectTypeEntityType = EntityTypeCache.Read( dataSourceObjectType, false );
+                var dataSourceObjectTypeEntityType = EntityTypeCache.Get( dataSourceObjectType, false );
                 if ( dataSourceObjectTypeEntityType != null && dataSourceObjectTypeEntityType.Id == entityTypeId )
                 {
                     // the entityType and the Datasource type are the same, so no additional merge fields 
@@ -3039,7 +3074,7 @@ namespace Rock.Web.UI.Controls
                 else
                 {
                     // the entityType and the Datasource type are different, so figure out the extra properties and put them into AdditionalMergeFields
-                    var entityType = EntityTypeCache.Read( entityTypeId.Value ).GetEntityType();
+                    var entityType = EntityTypeCache.Get( entityTypeId.Value ).GetEntityType();
                     var entityTypePropertyNames = entityType.GetProperties().Select( a => a.Name ).ToList();
 
                     additionalMergeProperties = new List<PropertyInfo>();
@@ -3181,7 +3216,7 @@ namespace Rock.Web.UI.Controls
                         if ( pageRef.IsValid )
                         {
                             // if a valid pageref was found, check the security of the page
-                            var page = PageCache.Read( pageRef.PageId );
+                            var page = PageCache.Get( pageRef.PageId );
                             if ( page != null )
                             {
                                 return page.IsAuthorized( Rock.Security.Authorization.VIEW, rockPage.CurrentPerson );
@@ -3214,17 +3249,9 @@ namespace Rock.Web.UI.Controls
 
                 string dataKey = parms[0];
 
-                int oldIndex = 0;
-                if ( !int.TryParse( parms[1], out oldIndex ) )
-                {
-                    oldIndex = 0;
-                }
+                int oldIndex = parms[1].AsIntegerOrNull() ?? 0;
 
-                int newIndex = 0;
-                if ( !int.TryParse( parms[2], out newIndex ) )
-                {
-                    newIndex = 0;
-                }
+                int newIndex = parms[2].AsIntegerOrNull() ?? 0;
 
                 int pageFactor = this.PageIndex * this.PageSize;
                 oldIndex += pageFactor;

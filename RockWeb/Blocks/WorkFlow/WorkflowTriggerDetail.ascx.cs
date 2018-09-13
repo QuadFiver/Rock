@@ -161,7 +161,7 @@ namespace RockWeb.Blocks.WorkFlow
         {
             ddlQualifierColumn.Items.Clear();
 
-            var entityType = EntityTypeCache.Read( ddlEntityType.SelectedValueAsInt().Value );
+            var entityType = EntityTypeCache.Get( ddlEntityType.SelectedValueAsInt().Value );
             if ( entityType != null )
             {
                 Type type = entityType.GetEntityType();
@@ -171,7 +171,12 @@ namespace RockWeb.Blocks.WorkFlow
                     var propertyNames = new List<string>();
                     foreach ( var property in type.GetProperties() )
                     {
-                        if ( !property.GetGetMethod().IsVirtual || property.Name == "Id" || property.Name == "Guid" || property.Name == "Order" || property.Name == "IsActive" )
+                        if ( !property.GetGetMethod().IsVirtual ||
+                            property.GetCustomAttributes( typeof( IncludeAsEntityProperty ) ).Any() ||
+                            property.Name == "Id" ||
+                            property.Name == "Guid" ||
+                            property.Name == "Order" ||
+                            property.Name == "IsActive" )
                         {
                             propertyNames.Add( property.Name );
                         }
@@ -281,7 +286,7 @@ namespace RockWeb.Blocks.WorkFlow
 
             rockContext.SaveChanges();
 
-            Rock.Workflow.TriggerCache.Refresh();
+            WorkflowTriggersCache.Remove();
 
             NavigateToParentPage();
         }

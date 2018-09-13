@@ -110,7 +110,7 @@ namespace Rock.Transactions
                         var transactionEntityList = new List<IEntity>();
                         foreach ( var transactionDetailEntity in transactionDetailEntityList)
                         {
-                            var transactionEntityType = EntityTypeCache.Read( transactionDetailEntity.EntityTypeId.Value );
+                            var transactionEntityType = EntityTypeCache.Get( transactionDetailEntity.EntityTypeId.Value );
                             if ( transactionEntityType != null )
                             {
                                 var dbContext = Reflection.GetDbContextForEntityType( transactionEntityType.GetEntityType() );

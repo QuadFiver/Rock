@@ -1,4 +1,4 @@
-﻿// <copyright>
+// <copyright>
 // Copyright by the Spark Development Network
 //
 // Licensed under the Rock Community License (the "License");
@@ -23,7 +23,6 @@ using System.Linq;
 using Rock.Extension;
 using Rock.Model;
 using Rock.Web.Cache;
-using System.Threading.Tasks;
 
 namespace Rock.Communication
 {
@@ -131,12 +130,12 @@ namespace Rock.Communication
             string value = content.ResolveMergeFields( mergeFields, person, enabledLavaCommands );
             value = value.ReplaceWordChars();
 
-            if ( themeRoot.IsNotNullOrWhitespace() )
+            if ( themeRoot.IsNotNullOrWhiteSpace() )
             {
                 value = value.Replace( "~~/", themeRoot );
             }
 
-            if ( appRoot.IsNotNullOrWhitespace() )
+            if ( appRoot.IsNotNullOrWhiteSpace() )
             {
                 value = value.Replace( "~/", appRoot );
                 value = value.Replace( @" src=""/", @" src=""" + appRoot );

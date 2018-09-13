@@ -129,15 +129,13 @@ namespace RockWeb.Blocks.CheckIn
             gChartAttendance.GridRebind += gChartAttendance_GridRebind;
             gAttendeesAttendance.GridRebind += gAttendeesAttendance_GridRebind;
 
-            gAttendeesAttendance.EntityTypeId = EntityTypeCache.Read<Rock.Model.Person>().Id;
+            gAttendeesAttendance.EntityTypeId = EntityTypeCache.Get<Rock.Model.Person>().Id;
             gAttendeesAttendance.Actions.ShowBulkUpdate = GetAttributeValue( "ShowBulkUpdateOption" ).AsBoolean( true );
             gAttendeesAttendance.Actions.ShowMergePerson = !_isGroupSpecific;
             gAttendeesAttendance.Actions.ShowMergeTemplate = !_isGroupSpecific;
 
-            dvpDataView.AutoLoadItems = false;
-            dvpDataView.EntityTypeId = EntityTypeCache.Read( typeof( Rock.Model.Person ) ).Id;
+            dvpDataView.EntityTypeId = EntityTypeCache.Get( typeof( Rock.Model.Person ) ).Id;
             dvpDataView.CategoryGuids = GetAttributeValue( "DataViewCategories" ).SplitDelimitedValues().AsGuidList();
-            dvpDataView.LoadDropDownItems();
 
             // show / hide the checkin details page
             btnCheckinDetails.Visible = !string.IsNullOrWhiteSpace( GetAttributeValue( "Check-inDetailPage" ) );
@@ -388,25 +386,28 @@ namespace RockWeb.Blocks.CheckIn
         private List<GroupType> GetSelectedGroupTypes()
         {
 
+
             if ( !_isGroupSpecific )
             {
                 var groupTypeGuids = this.GetAttributeValue( "GroupTypes" ).SplitDelimitedValues().AsGuidList();
                 if ( groupTypeGuids.Any() )
                 {
-                    var groupTypes = new List<GroupType>();
-
                     var groupTypeService = new GroupTypeService( _rockContext );
-                    foreach( var guid in groupTypeGuids )
-                    {
-                        var groupTypeCache = GroupTypeCache.Read( guid );
-                        if ( groupTypeCache != null )
+
+                    var groupTypes = groupTypeService
+                        .Queryable().AsNoTracking()
+                        .Where( t => groupTypeGuids.Contains( t.Guid ) )
+                        .OrderBy( t => t.Order )
+                        .ThenBy( t => t.Name )
+                        .ToList();
+
+                    foreach ( var groupType in groupTypes.ToList() )
+                    { 
+                        foreach ( var childGroupType in groupTypeService.GetAllAssociatedDescendentsOrdered( groupType.Id ) )
                         {
-                            foreach ( var groupType in groupTypeService.GetAllAssociatedDescendentsOrdered( groupTypeCache.Id ) )
+                            if ( !groupTypes.Any( t => t.Id == childGroupType.Id ) )
                             {
-                                if ( !groupTypes.Any( t => t.Id == groupType.Id ) )
-                                {
-                                    groupTypes.Add( groupType );
-                                }
+                                groupTypes.Add( childGroupType );
                             }
                         }
                     }
@@ -704,7 +705,7 @@ function(item) {
                 drpSlidingDateRange.DelimitedValues = slidingDateRangeSettings;
             }
 
-            dvpDataView.SetValue( GetSetting( keyPrefix, "DataView" ) );
+            dvpDataView.SetValue( GetSetting( keyPrefix, "DataView" ).AsIntegerOrNull() );
 
             hfGroupBy.Value = GetSetting( keyPrefix, "GroupBy" );
             hfGraphBy.Value = GetSetting( keyPrefix, "GraphBy" );
@@ -1698,12 +1699,12 @@ function(item) {
         private void LoadCurrentPageObjects( List<int> personIds )
         {
             // Load the addresses
-            var familyGroupType = GroupTypeCache.Read( Rock.SystemGuid.GroupType.GROUPTYPE_FAMILY.AsGuid() );
+            var familyGroupType = GroupTypeCache.Get( Rock.SystemGuid.GroupType.GROUPTYPE_FAMILY.AsGuid() );
             Guid? homeAddressGuid = Rock.SystemGuid.DefinedValue.GROUP_LOCATION_TYPE_HOME.AsGuidOrNull();
 
             if ( familyGroupType != null && homeAddressGuid.HasValue && personIds != null )
             {
-                var homeAddressDv = DefinedValueCache.Read( homeAddressGuid.Value );
+                var homeAddressDv = DefinedValueCache.Get( homeAddressGuid.Value );
                 if ( homeAddressDv != null )
                 {
                     _personLocations = new Dictionary<int, Location>();
@@ -2025,7 +2026,7 @@ function(item) {
 
                         if ( phoneNumber.NumberTypeValueId.HasValue )
                         {
-                            var phoneType = DefinedValueCache.Read( phoneNumber.NumberTypeValueId.Value );
+                            var phoneType = DefinedValueCache.Get( phoneNumber.NumberTypeValueId.Value );
                             if ( phoneType != null )
                             {
                                 formattedNumber = isExporting ?
