@@ -1,0 +1,15 @@
+{#
+
+{% set blockData = { 
+    id: '',
+    orientation: '',
+	copy: '',
+    linkUrl: ''
+} %}{% include "partials/share-buttons.html" %}
+
+#}
+
+<ul class="list-style-none hard" data-sticky>
+    <li class="push-half-bottom"><a href="#" class="btn btn-block btn-default text-gray-dark text-decoration-none" data-like><i class="far fa-fw fa-heart flush"></i> {{ [14,8,311,42,5,4,73,19,2] | random }}</a></li>
+    <li><a href="#" data-toggle="modal" data-target="#share-modal" class="btn btn-block btn-default text-gray-dark text-decoration-none" data-share><i class="fas fa-fw fa-share flush"></i> {{ [14,8,311,42,5,4,73,19,2] | random }}</a></li>
+</ul>
