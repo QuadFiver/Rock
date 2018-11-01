@@ -259,6 +259,9 @@ namespace RockWeb.Blocks.Crm.PersonDetail
             lReasonReadOnly.Visible = showInactiveReason && !canEditRecordStatus;
             tbInactiveReasonNote.Visible = showInactiveReason && canEditRecordStatus;
             lReasonNoteReadOnly.Visible = showInactiveReason && !canEditRecordStatus;
+
+            // show warning for marking inactive
+            inactiveWarning.Visible = showInactiveReason && canEditRecordStatus;
         }
 
         /// <summary>
