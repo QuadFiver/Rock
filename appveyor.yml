@@ -39,6 +39,8 @@ install:
 
     Set-Content c:\users\appveyor\.ssh\id_rsa $fileContent
 
+    git clone -q --depth=1 https://github.com/NewSpring/rock-external-theme.git c:\projects\rock-external-theme
+
     git clone -q --depth=1 https://github.com/NewSpring/rock-misc.git c:\projects\rock-misc
 
     git clone -q --depth=1 https://github.com/NewSpring/rock-f1.git c:\projects\rock-f1
