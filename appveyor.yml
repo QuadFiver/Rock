@@ -39,6 +39,8 @@ install:
 
     Set-Content c:\users\appveyor\.ssh\id_rsa $fileContent
 
+    git clone -q --depth=1 https://github.com/NewSpring/rock-external-theme.git c:\projects\rock-external-theme
+
     git clone -q --depth=1 https://github.com/NewSpring/rock-misc.git c:\projects\rock-misc
 
     git clone -q --depth=1 https://github.com/NewSpring/rock-f1.git c:\projects\rock-f1
@@ -68,6 +70,14 @@ before_build:
     Get-ChildItem $src | Copy-Item -Destination $dst -Force
 
     (Get-Content "C:\projects\Rock\RockWeb\web.config").Replace('<compilation debug="true"', '<compilation debug="false"') | Set-Content "C:\projects\Rock\RockWeb\web.config"
+
+    npm i -g gulp-cli
+
+    cd c:\projects\rock-external-theme
+
+    git checkout develop
+
+    gulp copy
 
 # build configuration
 build:

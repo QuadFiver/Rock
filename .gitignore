@@ -38,3 +38,9 @@ Packages/*
 # javascript deps
 node_modules
 *.map
+
+# rock shop
+RockWeb/Plugins/com_bricksandmortarstudio/
+RockWeb/Plugins/com_mineCartStudio/
+RockWeb/Plugins/com_shepherdchurch/
+RockWeb/Wistia.zip
