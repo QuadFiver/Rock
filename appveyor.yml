@@ -73,12 +73,6 @@ before_build:
 
     npm i -g gulp-cli
 
-    cd c:\projects\rock-external-theme
-
-    git checkout develop
-
-    gulp copy
-
 # build configuration
 build:
   project: Rock.sln
