@@ -77,6 +77,8 @@ before_build:
 
     cd c:\projects\rock-external-theme
 
+    npm i gulp-cli -g
+
     npm i gulp
 
     gulp copy
