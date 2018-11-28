@@ -71,11 +71,11 @@ before_build:
 
     (Get-Content "C:\projects\Rock\RockWeb\web.config").Replace('<compilation debug="true"', '<compilation debug="false"') | Set-Content "C:\projects\Rock\RockWeb\web.config"
 
-    npm i -g gulp-cli
+    rmdir c:\projects\Rock\RockWeb\Themes\NewSpring
 
     cd c:\projects\rock-external-theme
 
-    npm i
+    npm i gulp
 
     gulp copy
 
