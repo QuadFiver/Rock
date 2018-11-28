@@ -75,6 +75,8 @@ before_build:
 
     cd c:\projects\rock-external-theme
 
+    npm i
+
     gulp copy
 
 # build configuration
