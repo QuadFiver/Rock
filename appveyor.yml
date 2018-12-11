@@ -75,11 +75,11 @@ before_build:
       rmdir c:\projects\Rock\RockWeb\Themes\NewSpring
     }
 
-    cd c:\projects\rock-external-theme
-
     npm i gulp-cli -g
 
-    npm i gulp
+    cd c:\projects\rock-external-theme
+
+    npm i
 
     gulp copy
 
