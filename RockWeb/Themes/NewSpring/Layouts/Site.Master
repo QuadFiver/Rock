@@ -24,14 +24,45 @@
 
         <title></title>
 
+        <script>
+            document.addEventListener("DOMContentLoaded", function(){
+                var navigation = document.querySelector('#zone-navigation');
+                if(navigation != null) {
+                    var navigationHeight = navigation.offsetHeight;
+                }
+
+                var header = document.querySelector('#navigation-secondary');
+                if(header != null) {
+                    var headerHeight = header.offsetHeight;
+                }
+
+                if (window.innerWidth > 667) {
+                    // Desktop
+                    offset = navigationHeight + headerHeight + 25 + "px";
+                } else {
+                    // Mobile
+                    offset = headerHeight + 10 + "px";
+                }
+
+                var scroll = new SmoothScroll('a[data-scroll]', {
+                    speed: 500,
+                    speedAsDuration: true,
+                    offset: offset,
+                    easing: 'easeInOutCubic'
+                });
+
+
+            });
+        </script>
+
         <!-- Libraries -->
+        <script src="<%# ResolveRockUrl("~~/Scripts/smooth-scroll.js", true) %>" ></script>
         <script src="<%# System.Web.Optimization.Scripts.Url("~/Scripts/Bundles/RockJQueryLatest" ) %>"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
         <script src="<%# ResolveRockUrl("~~/Scripts/layout.js", true) %>" ></script>
         <script src="<%# ResolveRockUrl("~~/Scripts/append-query.js", true) %>" ></script>
         <script src="<%# ResolveRockUrl("~~/Scripts/swiper.js", true) %>" ></script>
         <script src="<%# ResolveRockUrl("~~/Scripts/navigation.js", true) %>" ></script>
-        <script src="<%# ResolveRockUrl("~~/Scripts/smooth-scroll.js", true) %>" ></script>
         <script src="<%# ResolveRockUrl("~~/Scripts/search.js", true) %>" ></script>
 
         <!-- Set the viewport width to device width for mobile -->
@@ -63,7 +94,7 @@
                         <div class="{% if CurrentPage.MenuDisplayChildPages == 'True' %}hidden-md hidden-lg{% endif %}">
                             {[ pageHeader title:'{{ 'Global' | Page:'Title' }}' ]}
                         </div>
-                    {% endif %}         
+                    {% endif %}
                 </Rock:Lava>
             </div>
 
@@ -77,7 +108,7 @@
             <div id="content" class="clearfix">
                 <asp:ContentPlaceHolder ID="feature" runat="server"></asp:ContentPlaceHolder>
                 <asp:ContentPlaceHolder ID="main" runat="server"></asp:ContentPlaceHolder>
-                <Rock:Zone Name="Footer" runat="server" />                
+                <Rock:Zone Name="Footer" runat="server" />
             </div>
 
             <Rock:Lava ID="PageConstrainedEnd" runat="server">
@@ -103,38 +134,6 @@
                         <div class="updateprogress-bg modal-backdrop"></div>
                     </ProgressTemplate>
             </asp:UpdateProgress>
-
-            <!-- Smooth Scrolling Setup -->
-            <script>
-                document.addEventListener("DOMContentLoaded", function(){
-                    var navigation = document.querySelector('#zone-navigation');
-                    if(navigation != null) {
-                        var navigationHeight = navigation.offsetHeight;
-                    }
-
-                    var header = document.querySelector('#navigation-secondary');
-                    if(header != null) {
-                        var headerHeight = header.offsetHeight;
-                    }
-
-                    if (window.innerWidth > 667) {
-                        // Desktop
-                        offset = navigationHeight + headerHeight + 25 + "px";
-                    } else {
-                        // Mobile
-                        offset = headerHeight + 10 + "px";
-                    }
-
-                    var scroll = new SmoothScroll('a[data-scroll]', {
-                        speed: 500,
-                        speedAsDuration: true,
-                        offset: offset,
-                        easing: 'easeInOutCubic'
-                    });
-
-                    
-                });
-            </script>
 
         </form>
 
